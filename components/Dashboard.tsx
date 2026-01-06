@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LevelData, UserProfile, DIGITAL_SHIELDS, SECTORS, TaskRecord, SERVICES_CATALOG, ServiceItem, ServicePackage, ServiceRequest, OpportunityAnalysis, ProgramRating, Partner, AVAILABLE_AGENTS, AIAgent, AgentCategory } from '../types';
 import { storageService } from '../services/storageService';
-import { discoverOpportunities, suggestIconsForLevels } from '../services/geminiService';
+import { discoverOpportunities, suggestIconsForLevels, reviewDeliverableAI } from '../services/geminiService';
 import { Language, getTranslation } from '../services/i18nService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
@@ -60,6 +60,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [selectedTask, setSelectedTask] = useState<TaskRecord | null>(null);
   const [submissionFile, setSubmissionFile] = useState<{data: string, name: string} | null>(null);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -146,6 +147,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setSelectedTask(null);
     setSubmissionFile(null);
     playCelebrationSound();
+  };
+
+  const handleAIGenerateSubmission = async () => {
+    if (!selectedTask) return;
+    setIsGeneratingAI(true);
+    playPositiveSound();
+    
+    try {
+      const context = `Startup: ${userProfile.startupName}, Industry: ${userProfile.industry}, Mission: ${userProfile.startupBio}`;
+      const review = await reviewDeliverableAI(selectedTask.title, selectedTask.description, context);
+      
+      const session = storageService.getCurrentSession();
+      if (session) {
+        storageService.submitTask(session.uid, selectedTask.id, {
+          fileData: `data:text/plain;base64,${btoa("AI Generated deliverable for " + selectedTask.title + ". Review score: " + review.readinessScore)}`,
+          fileName: `AI_Generated_${selectedTask.title.replace(/\s+/g, '_')}.pdf`
+        }, review);
+        
+        setUserTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: 'SUBMITTED' } : t));
+        playCelebrationSound();
+        setSelectedTask(null);
+      }
+    } catch (e) {
+      alert("حدث خطأ أثناء التوليد الذكي للمخرج.");
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   const handleSaveProfile = () => {
@@ -719,36 +747,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <p className="text-slate-500 text-sm leading-relaxed font-medium">{selectedTask.description}</p>
               </div>
               
-              <div onClick={() => taskFileRef.current?.click()} className={`w-full h-72 border-4 border-dashed rounded-[3rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${submissionFile ? 'bg-emerald-500/5 border-emerald-500' : (isDark ? 'bg-slate-800 border-white/5 hover:border-blue-500/50' : 'bg-slate-50 border-slate-200 hover:border-blue-500/50')}`}>
-                 <input type="file" ref={taskFileRef} className="hidden" accept="application/pdf" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file && file.type === 'application/pdf') {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setSubmissionFile({ data: reader.result as string, name: file.name });
-                        playPositiveSound();
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                 }} />
-                 {submissionFile ? (
-                   <>
-                      <span className="text-5xl mb-4">📄</span>
-                      <p className="font-black text-emerald-500 text-lg">{submissionFile.name}</p>
-                      <p className="text-xs text-slate-400 mt-2">انقر لتغيير الملف</p>
-                   </>
-                 ) : (
-                   <>
-                      <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg mb-6 transform group-hover:scale-110 transition-transform">📁</div>
-                      <p className="font-black text-slate-400">انقر هنا لرفع مخرجك النهائي بصيغة PDF</p>
-                      <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Maximum Size: 5MB</p>
-                   </>
-                 )}
+              <div className="space-y-6">
+                <div onClick={() => !isGeneratingAI && taskFileRef.current?.click()} className={`w-full h-56 border-4 border-dashed rounded-[3rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${submissionFile ? 'bg-emerald-500/5 border-emerald-500' : (isDark ? 'bg-slate-800 border-white/5 hover:border-blue-500/50' : 'bg-slate-50 border-slate-200 hover:border-blue-500/50')}`}>
+                   <input type="file" ref={taskFileRef} className="hidden" accept="application/pdf" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && file.type === 'application/pdf') {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setSubmissionFile({ data: reader.result as string, name: file.name });
+                          playPositiveSound();
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                   }} />
+                   {submissionFile ? (
+                     <>
+                        <span className="text-4xl mb-2">📄</span>
+                        <p className="font-black text-emerald-500 text-lg">{submissionFile.name}</p>
+                        <p className="text-xs text-slate-400 mt-2">انقر لتغيير الملف</p>
+                     </>
+                   ) : (
+                     <>
+                        <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg mb-4 transform group-hover:scale-110 transition-transform">📁</div>
+                        <p className="font-black text-slate-400">انقر هنا لرفع مخرجك النهائي بصيغة PDF</p>
+                        <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Maximum Size: 5MB</p>
+                     </>
+                   )}
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-slate-200 dark:border-white/10"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm font-bold">
+                    <span className="bg-white dark:bg-slate-900 px-4 text-slate-500 uppercase tracking-widest text-[9px]">أو التوليد الفوري</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleAIGenerateSubmission}
+                  disabled={isGeneratingAI || submissionFile !== null}
+                  className={`w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-[2rem] font-black text-sm shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 group
+                    ${(isGeneratingAI || submissionFile !== null) ? 'opacity-30' : 'hover:brightness-110 shadow-blue-500/20'}
+                  `}
+                >
+                  {isGeneratingAI ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <span className="text-xl group-hover:rotate-12 transition-transform">✨</span>
+                      <span>توليد المخرج آلياً بواسطة الذكاء الاصطناعي</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               <div className="flex gap-4 mt-10">
                 <button onClick={() => { setSelectedTask(null); setSubmissionFile(null); }} className="flex-1 py-5 font-black text-slate-400 hover:text-slate-600 transition-colors">إغلاق</button>
-                <button onClick={handleTaskSubmit} disabled={!submissionFile} className="flex-[2] py-5 bg-blue-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-blue-500/30 disabled:opacity-30 active:scale-95 transition-all hover:bg-blue-700">إرسال المخرج للمراجعة 🚀</button>
+                <button 
+                  onClick={handleTaskSubmit} 
+                  disabled={!submissionFile || isGeneratingAI} 
+                  className="flex-[2] py-5 bg-blue-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-blue-500/30 disabled:opacity-30 active:scale-95 transition-all hover:bg-blue-700"
+                >
+                  إرسال المخرج للمراجعة 🚀
+                </button>
               </div>
             </div>
           </div>

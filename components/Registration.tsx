@@ -11,6 +11,29 @@ interface RegistrationProps {
   lang: Language;
 }
 
+const INDUSTRY_OPTIONS = [
+  { value: 'Technology', label: 'التقنية والبرمجيات' },
+  { value: 'Fintech', label: 'التقنية المالية' },
+  { value: 'Ecommerce', label: 'التجارة الإلكترونية' },
+  { value: 'Healthcare', label: 'الرعاية الصحية' },
+  { value: 'Education', label: 'التعليم' },
+  { value: 'Logistics', label: 'الخدمات اللوجستية' },
+  { value: 'Industrial', label: 'القطاع الصناعي' },
+  { value: 'Food', label: 'الأغذية والمشروبات' },
+  { value: 'Energy', label: 'الطاقة والاستدامة' },
+  { value: 'RealEstate', label: 'العقارات والإنشاءات' },
+  { value: 'Media', label: 'الإعلام والترفيه' }
+];
+
+const STAGE_OPTIONS = [
+  { value: 'Idea', label: 'فكرة (Idea)' },
+  { value: 'Prototype', label: 'نموذج أولي (Prototype)' },
+  { value: 'MVP', label: 'منتج أولي (MVP)' },
+  { value: 'Traction', label: 'نمو أولي (Traction)' },
+  { value: 'Growth', label: 'توسع (Growth)' },
+  { value: 'InvestReady', label: 'جاهز للاستثمار (Invest Ready)' }
+];
+
 export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', onRegister, onStaffLogin, lang }) => {
   const t = getTranslation(lang);
   const [step, setStep] = useState(1);
@@ -18,18 +41,30 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
     firstName: '', lastName: '', email: '', phone: '', city: '', 
     agreedToTerms: false, agreedToContract: false,
     startupName: '', startupDescription: '', industry: 'Technology',
+    companyIndustry: 'Technology', startupStage: 'Idea',
     existingRoles: [], missingRoles: [], supportNeeded: [], mentorExpertise: [], mentorSectors: [],
     skills: []
   });
 
   const roleMeta = {
-    STARTUP: { title: 'مؤسس مشروع', color: 'blue', icon: '🚀', total: 5 },
-    PARTNER: { title: 'شريك استراتيجي', color: 'emerald', icon: '🤝', total: 5 },
-    MENTOR: { title: 'مرشد خبير', color: 'purple', icon: '🧠', total: 5 }
-  }[role] || { title: 'تسجيل', color: 'blue', icon: '🚀', total: 5 };
+    STARTUP: { title: 'مؤسس مشروع', color: 'blue', icon: '🚀', total: 3 },
+    PARTNER: { title: 'شريك استراتيجي', color: 'emerald', icon: '🤝', total: 3 },
+    MENTOR: { title: 'مرشد خبير', color: 'purple', icon: '🧠', total: 3 }
+  }[role] || { title: 'تسجيل', color: 'blue', icon: '🚀', total: 3 };
 
-  const handleNext = () => { setStep(s => s + 1); playPositiveSound(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const handleNext = () => { 
+    if (step < roleMeta.total) {
+      setStep(s => s + 1); 
+      playPositiveSound(); 
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    } else {
+      onRegister(formData);
+      playCelebrationSound();
+    }
+  };
+
   const inputClass = "w-full p-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[1.8rem] outline-none focus:border-primary transition-all font-bold text-lg dark:text-white placeholder-slate-300 dark:placeholder-slate-700";
+  const selectClass = "w-full p-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[1.8rem] outline-none focus:border-primary transition-all font-bold text-lg dark:text-white appearance-none cursor-pointer";
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white dark:bg-slate-950 font-sans" dir="rtl">
@@ -58,7 +93,9 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
         <div className="max-w-xl w-full space-y-12 animate-fade-up">
            <header className="space-y-4">
               <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Step 0{step} of 0{roleMeta.total}</span>
-              <h2 className="text-4xl font-black text-slate-900 dark:text-white">فلنبدأ بالتعارف</h2>
+              <h2 className="text-4xl font-black text-slate-900 dark:text-white">
+                {step === 1 ? 'فلنبدأ بالتعارف' : step === 2 ? 'بيانات المشروع' : 'تأكيد التسجيل'}
+              </h2>
            </header>
 
            <div className="space-y-8">
@@ -72,13 +109,70 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                   <input className={inputClass} placeholder="رقم الجوال" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                 </div>
               )}
-              {/* Other steps logic follows similarly... omitted for brevity as per rules to keep updates minimal */}
+
+              {step === 2 && (
+                <div className="space-y-6">
+                   <input className={inputClass} placeholder="اسم المشروع الناشئ" value={formData.startupName} onChange={e => setFormData({...formData, startupName: e.target.value})} />
+                   <textarea className={`${inputClass} h-32 resize-none`} placeholder="وصف مختصر للفكرة" value={formData.startupDescription} onChange={e => setFormData({...formData, startupDescription: e.target.value})} />
+                   
+                   <div className="space-y-2">
+                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-4">قطاع الشركة</label>
+                     <div className="relative">
+                        <select className={selectClass} value={formData.companyIndustry} onChange={e => setFormData({...formData, companyIndustry: e.target.value})}>
+                          {INDUSTRY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">▼</div>
+                     </div>
+                   </div>
+
+                   <div className="space-y-2">
+                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-4">مرحلة المشروع الحالية</label>
+                     <div className="relative">
+                        <select className={selectClass} value={formData.startupStage} onChange={e => setFormData({...formData, startupStage: e.target.value})}>
+                          {STAGE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">▼</div>
+                     </div>
+                   </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-6">
+                  <div className="p-8 bg-slate-50 dark:bg-white/5 rounded-[2.5rem] space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
+                      <span className="font-bold text-slate-500">الاسم:</span>
+                      <span className="font-black text-slate-900 dark:text-white">{formData.firstName} {formData.lastName}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
+                      <span className="font-bold text-slate-500">المشروع:</span>
+                      <span className="font-black text-slate-900 dark:text-white">{formData.startupName}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
+                      <span className="font-bold text-slate-500">القطاع:</span>
+                      <span className="font-black text-primary">{INDUSTRY_OPTIONS.find(o => o.value === formData.companyIndustry)?.label}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-500">المرحلة:</span>
+                      <span className="font-black text-primary">{STAGE_OPTIONS.find(o => o.value === formData.startupStage)?.label}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-4 cursor-pointer group">
+                      <input type="checkbox" checked={formData.agreedToTerms} onChange={e => setFormData({...formData, agreedToTerms: e.target.checked})} className="w-6 h-6 rounded-lg accent-primary" />
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-400">أوافق على سياسة الخصوصية وشروط الاستخدام</span>
+                    </label>
+                  </div>
+                </div>
+              )}
               
               <button 
                 onClick={handleNext} 
-                className="w-full py-7 bg-primary text-white rounded-[2.2rem] font-black text-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6"
+                disabled={step === 3 && !formData.agreedToTerms}
+                className="w-full py-7 bg-primary text-white rounded-[2.2rem] font-black text-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-50"
               >
-                <span>المتابعة للمرحلة التالية</span>
+                <span>{step === roleMeta.total ? 'إتمام التسجيل' : 'المتابعة للمرحلة التالية'}</span>
                 <svg className="w-8 h-8 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               </button>
            </div>

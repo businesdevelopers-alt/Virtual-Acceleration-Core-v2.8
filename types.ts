@@ -44,7 +44,9 @@ export interface UserProfile {
   startupDescription?: string;
   startupBio?: string;
   industry?: string;
+  companyIndustry?: string;
   stage?: 'Idea' | 'MVP' | 'Growth' | 'InvestReady';
+  startupStage?: string;
   logo?: string;
   partners?: Partner[];
   founderBio?: string;
