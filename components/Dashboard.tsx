@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LevelData, UserProfile, DIGITAL_SHIELDS, SECTORS, TaskRecord, SERVICES_CATALOG, ServiceItem, ServicePackage, ServiceRequest, OpportunityAnalysis, ProgramRating, Partner, AVAILABLE_AGENTS, AIAgent, AgentCategory } from '../types';
 import { storageService } from '../services/storageService';
@@ -175,7 +174,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           fileName: `AI_Generated_${targetTask.title.replace(/\s+/g, '_')}.pdf`
         }, review);
         
-        setUserTasks(prev => prev.map(t => t.id === targetTask.id ? { ...t, status: 'SUBMITTED' } : t));
+        // Auto-approve after AI generation
+        storageService.approveTask(session.uid, targetTask.id);
+        
+        setUserTasks(storageService.getUserTasks(session.uid));
         playCelebrationSound();
         setSelectedTask(null);
       }
@@ -284,6 +286,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       case 'SUBMITTED': return <span className="text-[9px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md border border-amber-200">قيد المراجعة</span>;
       case 'APPROVED': return <span className="text-[9px] font-black bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-md border border-emerald-200">مكتمل ✓</span>;
       case 'ASSIGNED': return <span className="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-md border border-blue-200">بانتظار التسليم</span>;
+      case 'LOCKED': return <span className="text-[9px] font-black bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md border border-slate-200">مغلق</span>;
+      case 'REJECTED': return <span className="text-[9px] font-black bg-rose-100 text-rose-600 px-2 py-0.5 rounded-md border border-rose-200">بحاجة لتعديل</span>;
       default: return null;
     }
   };
@@ -416,6 +420,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           const colorSet = getLevelColorSet(level.customColor);
                           const levelTask = getTaskForLevel(level.id);
                           const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
+                          const canAIGenerate = levelTask && !['APPROVED', 'SUBMITTED'].includes(levelTask.status);
+                          
                           return (
                             <div 
                               key={level.id} 
@@ -437,7 +443,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     <p className="text-sm text-slate-500 font-medium truncate mt-1 opacity-80">{level.description}</p>
                                   </div>
                                </div>
-                               <div className="flex items-center gap-6 shrink-0 px-6">
+                               <div className="flex items-center gap-4 shrink-0 px-6">
+                                  {canAIGenerate && (
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask); }}
+                                      disabled={isGeneratingAI}
+                                      className="p-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100 group/ai"
+                                      title="توليد المخرج بالذكاء الاصطناعي لتسريع التقدم"
+                                    >
+                                      {isGeneratingAI ? <div className="w-4 h-4 border-2 border-indigo-400 border-t-indigo-600 rounded-full animate-spin"></div> : <span className="text-lg group-hover/ai:rotate-12 transition-transform">✨</span>}
+                                    </button>
+                                  )}
                                   {level.isLocked ? (
                                     <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${isDark ? 'bg-slate-900 border-white/5 text-slate-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
                                         <span className="text-xs">🔒</span>
@@ -523,11 +539,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                      <div key={task.id} className="p-10 rounded-[3.5rem] card-neo">
                         <div className="flex justify-between items-center mb-8">
                            <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Milestone 0{task.levelId}</span>
-                           <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border ${task.status === 'ASSIGNED' ? 'bg-blue-50 text-blue-600 border-blue-100' : task.status === 'SUBMITTED' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>{task.status === 'APPROVED' ? 'مقبول' : task.status}</span>
+                           <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border ${task.status === 'ASSIGNED' ? 'bg-blue-50 text-blue-600 border-blue-100' : task.status === 'SUBMITTED' ? 'bg-amber-50 text-amber-600 border-amber-100' : task.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>{task.status === 'APPROVED' ? 'مقبول' : task.status}</span>
                         </div>
                         <h4 className="text-2xl font-black mb-4 leading-tight">{task.title}</h4>
                         <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">{task.description}</p>
-                        {task.status === 'ASSIGNED' && (
+                        {!['APPROVED', 'SUBMITTED'].includes(task.status) && (
                            <div className="space-y-3">
                               <button onClick={() => setSelectedTask(task)} className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-sm hover:brightness-110 transition-all shadow-xl shadow-blue-600/20 active:scale-95">تسليم المخرج (PDF)</button>
                               <button 
