@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بيزنس ديفلوبرز | المسرعة الذكية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #2563eb;
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a;
+        --slate-950: #020617;
+        --radius-corporate: 1rem;
+        --radius-elite: 2.5rem;
+      }
+
+      body {
+        font-family: 'IBM Plex Sans Arabic', sans-serif;
+        background-color: white;
+        color: var(--slate-900);
+        -webkit-font-smoothing: antialiased;
+        scroll-behavior: smooth;
+      }
+
+      body.dark {
+        background-color: var(--slate-950);
+        color: #f1f5f9;
+      }
+
+      /* Typography Hierarchy */
+      h1, h2, h3, h4 { 
+        letter-spacing: -0.03em; 
+        line-height: 1.1; 
+        font-weight: 900; 
+      }
+
+      /* Elite Sharp System - NO GRADIENTS */
+      .card-premium {
+        background: white;
+        border-radius: var(--radius-elite);
+        border: 1px solid var(--slate-200);
+        transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      body.dark .card-premium {
+        background: var(--slate-900);
+        border-color: rgba(255, 255, 255, 0.05);
+      }
+      .card-premium:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05);
+      }
+
+      /* Staggered Animations */
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .stagger-load > * {
+        opacity: 0;
+        animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+      }
+      .stagger-load > *:nth-child(1) { animation-delay: 0.1s; }
+      .stagger-load > *:nth-child(2) { animation-delay: 0.2s; }
+      .stagger-load > *:nth-child(3) { animation-delay: 0.3s; }
+      .stagger-load > *:nth-child(4) { animation-delay: 0.4s; }
+
+      .animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 10px; }
+      body.dark ::-webkit-scrollbar-thumb { background: var(--slate-800); }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: { 
+              primary: '#2563eb',
+              'brand-dark': '#020617'
+            },
+            borderRadius: { 'premium': '2.5rem' }
+          }
+        }
+      }
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "recharts": "https://esm.sh/recharts@^2.12.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+  </head>
+  <body class="antialiased overflow-x-hidden selection:bg-primary/10">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
