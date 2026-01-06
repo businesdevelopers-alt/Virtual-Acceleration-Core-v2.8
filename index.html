@@ -97,6 +97,13 @@
         transform: scale(1);
       }
 
+      /* Subtle icon-zoom effect on button hover */
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover svg,
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover span[class*="text-"] {
+        transform: scale(1.2) rotate(5deg);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
       /* Subtly intensified scale effect on hover */
       .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover {
         transform: scale(1.035) translateY(-2px) !important;
