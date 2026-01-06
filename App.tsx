@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiltrationStage, UserProfile, UserRole } from './types';
 import { storageService } from './services/storageService';
@@ -20,6 +19,7 @@ import { IncubationApply } from './components/IncubationApply';
 import { ScreeningPortal } from './components/ScreeningPortal';
 import { RoadmapPage } from './components/RoadmapPage';
 import { ToolsPage } from './components/ToolsPage';
+import { ServicesPage } from './components/ServicesPage';
 
 function App() {
   const [stage, setStage] = useState<FiltrationStage>(FiltrationStage.LANDING);
@@ -103,10 +103,13 @@ function App() {
           onPartnerConcept={() => setStage(FiltrationStage.PARTNER_CONCEPT)}
           onAIMentorConcept={() => setStage(FiltrationStage.AI_MENTOR_CONCEPT)}
           onForeignInvestment={() => setStage(FiltrationStage.FOREIGN_INVESTMENT)}
+          onServices={() => setStage(FiltrationStage.SERVICES)}
           lang={currentLang}
           onLanguageChange={setCurrentLang}
         />
       )}
+
+      {stage === FiltrationStage.SERVICES && <ServicesPage onBack={() => setStage(FiltrationStage.LANDING)} />}
 
       {stage === FiltrationStage.INCUBATION_APPLY && currentUser && (
         <IncubationApply user={currentUser} onSubmitted={hydrateSession} />

@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { AVAILABLE_AGENTS, ProjectBuildData, AIAgent, AgentCategory } from '../../types';
 import { runProjectAgents, generatePitchDeck } from '../../services/geminiService';
 import { playPositiveSound, playCelebrationSound } from '../../services/audioService';
@@ -27,6 +26,7 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleAgent = (id: string) => {
     setFormData(prev => ({
@@ -36,6 +36,31 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
         : [...prev.selectedAgents, id]
     }));
     playPositiveSound();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert("يرجى اختيار ملف بصيغة PDF أو Word فقط.");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          projectFile: {
+            data: reader.result as string,
+            name: file.name,
+            type: file.type
+          }
+        }));
+        playPositiveSound();
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const filteredAgents = useMemo(() => {
@@ -172,6 +197,35 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
                         value={formData.description}
                         onChange={e => setFormData({...formData, description: e.target.value})}
                       />
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pr-2">ملفات المشروع (اختياري)</label>
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`w-full p-6 border-2 border-dashed rounded-[1.8rem] flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-blue-50/50 hover:border-blue-400
+                          ${formData.projectFile ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-200'}
+                        `}
+                      >
+                         <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.docx,.doc" onChange={handleFileUpload} />
+                         {formData.projectFile ? (
+                           <>
+                              <span className="text-3xl mb-2">📄</span>
+                              <p className="text-xs font-black text-blue-600 truncate max-w-full px-2">{formData.projectFile.name}</p>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, projectFile: undefined })); }}
+                                className="mt-2 text-[9px] font-black text-rose-500 uppercase hover:underline"
+                              >
+                                حذف الملف
+                              </button>
+                           </>
+                         ) : (
+                           <>
+                              <span className="text-3xl mb-2 opacity-20">📁</span>
+                              <p className="text-[10px] font-black text-slate-400 text-center">ارفق خطة العمل أو ملف تعريفي (PDF/DOCX)</p>
+                           </>
+                         )}
+                      </div>
                     </div>
 
                     <div className="space-y-4">

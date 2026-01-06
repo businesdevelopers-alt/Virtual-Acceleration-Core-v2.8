@@ -1,4 +1,3 @@
-
 export type Language = 'ar' | 'en' | 'fr' | 'zh';
 
 export const translations = {
@@ -25,7 +24,8 @@ export const translations = {
       login: 'دخول',
       startFree: 'ابدأ مجاناً',
       partner: 'شريك',
-      aiMentor: 'الموجه الذكي'
+      aiMentor: 'الموجه الذكي',
+      services: 'خدماتنا'
     },
     roles: {
       startup: 'شركة محتضنة',
@@ -87,7 +87,8 @@ export const translations = {
       login: 'Login',
       startFree: 'Get Started',
       partner: 'Partner',
-      aiMentor: 'AI Mentor'
+      aiMentor: 'AI Mentor',
+      services: 'Our Services'
     },
     roles: {
       startup: 'Startup',

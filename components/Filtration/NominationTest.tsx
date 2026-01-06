@@ -152,7 +152,7 @@ export const NominationTest: React.FC<NominationTestProps> = ({ onComplete, onRe
 
            <button 
              onClick={() => setStep(1)}
-             className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-[2rem] font-black text-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-4"
+             className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-[2rem] font-black text-xl shadow-3xl shadow-blue-500/30 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4"
            >
              <span>بدء اختبار القبول</span>
              <svg className="w-6 h-6 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -436,7 +436,7 @@ export const NominationTest: React.FC<NominationTestProps> = ({ onComplete, onRe
                        <svg className="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                     </button>
                  ) : (
-                    <button onClick={handleSubmit} disabled={isSubmitting} className="px-16 py-5 bg-slate-900 text-white rounded-[1.8rem] font-black text-sm shadow-xl hover:bg-black transition-all flex items-center gap-4 disabled:opacity-50 active:scale-95">
+                    <button onClick={handleSubmit} disabled={isSubmitting} className="px-16 py-5 bg-slate-900 text-white rounded-[1.8rem] font-black text-sm shadow-xl hover:bg-black transition-all flex items-center justify-center gap-4 disabled:opacity-50 active:scale-95">
                        {isSubmitting ? 'جاري التحليل المعمق...' : 'إرسال الاختبار للتقييم'}
                        {!isSubmitting && <span className="text-2xl">🚀</span>}
                     </button>

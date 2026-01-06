@@ -32,6 +32,15 @@ const PRESET_COLORS = [
   { name: 'سحابي', bg: 'bg-slate-500', text: 'text-slate-500', border: 'border-slate-500', light: 'bg-slate-50', ring: 'ring-slate-500' },
 ];
 
+const LEVEL_ICON_MAP: Record<number, string> = {
+  1: '🔎', // Strategic Verification
+  2: '📐', // Business Model Structuring
+  3: '🏗️', // MVP Engineering
+  4: '📈', // Growth Analysis
+  5: '🏦', // Financial Modeling
+  6: '🚀'  // Investment Readiness
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({ 
   user: initialUser, levels, onSelectLevel, onShowCertificate, onLogout, 
   onOpenProAnalytics, onUpdateLevelUI, onAISuggestIcons,
@@ -149,23 +158,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
     playCelebrationSound();
   };
 
-  const handleAIGenerateSubmission = async () => {
-    if (!selectedTask) return;
+  const handleAIGenerateSubmission = async (taskToUse?: TaskRecord) => {
+    const targetTask = taskToUse || selectedTask;
+    if (!targetTask) return;
     setIsGeneratingAI(true);
     playPositiveSound();
     
     try {
       const context = `Startup: ${userProfile.startupName}, Industry: ${userProfile.industry}, Mission: ${userProfile.startupBio}`;
-      const review = await reviewDeliverableAI(selectedTask.title, selectedTask.description, context);
+      const review = await reviewDeliverableAI(targetTask.title, targetTask.description, context);
       
       const session = storageService.getCurrentSession();
       if (session) {
-        storageService.submitTask(session.uid, selectedTask.id, {
-          fileData: `data:text/plain;base64,${btoa("AI Generated deliverable for " + selectedTask.title + ". Review score: " + review.readinessScore)}`,
-          fileName: `AI_Generated_${selectedTask.title.replace(/\s+/g, '_')}.pdf`
+        storageService.submitTask(session.uid, targetTask.id, {
+          fileData: `data:text/plain;base64,${btoa("AI Generated deliverable for " + targetTask.title + ". Review score: " + review.readinessScore)}`,
+          fileName: `AI_Generated_${targetTask.title.replace(/\s+/g, '_')}.pdf`
         }, review);
         
-        setUserTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: 'SUBMITTED' } : t));
+        setUserTasks(prev => prev.map(t => t.id === targetTask.id ? { ...t, status: 'SUBMITTED' } : t));
         playCelebrationSound();
         setSelectedTask(null);
       }
@@ -405,6 +415,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {levels.map((level) => {
                           const colorSet = getLevelColorSet(level.customColor);
                           const levelTask = getTaskForLevel(level.id);
+                          const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
                           return (
                             <div 
                               key={level.id} 
@@ -413,7 +424,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             >
                                <div className="flex items-center gap-8 flex-1 min-w-0">
                                   <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center text-4xl shrink-0 transition-all premium-shadow ${level.isCompleted ? (colorSet.bg) + ' text-white' : (level.isLocked ? (isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-100 text-slate-300') : colorSet.light + ' ' + colorSet.text)} group-hover:scale-110 group-hover:rotate-3`}>
-                                     {level.isCompleted ? '✓' : level.icon}
+                                     {level.isCompleted ? '✓' : levelIcon}
                                   </div>
                                   <div className="truncate">
                                     <div className="flex items-center gap-3">
@@ -517,7 +528,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <h4 className="text-2xl font-black mb-4 leading-tight">{task.title}</h4>
                         <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">{task.description}</p>
                         {task.status === 'ASSIGNED' && (
-                           <button onClick={() => setSelectedTask(task)} className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-sm hover:brightness-110 transition-all shadow-xl shadow-blue-600/20 active:scale-95">تسليم المخرج (PDF)</button>
+                           <div className="space-y-3">
+                              <button onClick={() => setSelectedTask(task)} className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-sm hover:brightness-110 transition-all shadow-xl shadow-blue-600/20 active:scale-95">تسليم المخرج (PDF)</button>
+                              <button 
+                                onClick={() => handleAIGenerateSubmission(task)}
+                                disabled={isGeneratingAI}
+                                className="w-full py-4 bg-white border-2 border-indigo-100 text-indigo-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"
+                              >
+                                {isGeneratingAI ? (
+                                  <div className="w-4 h-4 border-2 border-indigo-400 border-t-indigo-600 rounded-full animate-spin"></div>
+                                ) : (
+                                  <>
+                                    <span className="text-lg group-hover:rotate-12 transition-transform">✨</span>
+                                    <span>توليد المخرج فوراً (AI)</span>
+                                  </>
+                                )}
+                              </button>
+                           </div>
                         )}
                         {task.status === 'SUBMITTED' && (
                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
@@ -785,7 +812,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
 
                 <button 
-                  onClick={handleAIGenerateSubmission}
+                  onClick={() => handleAIGenerateSubmission()}
                   disabled={isGeneratingAI || submissionFile !== null}
                   className={`w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-[2rem] font-black text-sm shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 group
                     ${(isGeneratingAI || submissionFile !== null) ? 'opacity-30' : 'hover:brightness-110 shadow-blue-500/20'}
@@ -807,7 +834,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <button 
                   onClick={handleTaskSubmit} 
                   disabled={!submissionFile || isGeneratingAI} 
-                  className="flex-[2] py-5 bg-blue-600 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-blue-500/30 disabled:opacity-30 active:scale-95 transition-all hover:bg-blue-700"
+                  className="flex-[2] py-6 bg-blue-600 text-white rounded-[2rem] font-black text-xl shadow-3xl shadow-blue-500/30 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4"
                 >
                   إرسال المخرج للمراجعة 🚀
                 </button>
@@ -849,7 +876,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <ul className="space-y-3 mb-4">
                          {pkg.features.map((f, i) => (
                            <li key={i} className={`text-sm font-bold flex items-center gap-3 ${selectedPackageId === pkg.id ? 'text-blue-50' : 'text-slate-500'}`}>
-                             <span className={`w-1.5 h-1.5 rounded-full ${selectedPackageId === pkg.id ? 'bg-white' : 'bg-blue-500'}`}></span>
+                             <span className={`w-1.5 h-1.5 rounded-full ${selectedPackageId === pkg.id ? 'bg-white' : 'bg-blue-50'}`}></span>
                              {f}
                            </li>
                          ))}
@@ -865,7 +892,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pr-2">تفاصيل إضافية أو متطلبات خاصة:</label>
                   <textarea 
                     className={`w-full h-32 p-6 rounded-[2rem] border outline-none font-medium resize-none transition-all
-                      ${isDark ? 'bg-white/5 border-white/5 focus:border-blue-500' : 'bg-slate-50 border-slate-100 focus:border-blue-500'}
+                      ${isDark ? 'bg-white/5 border-white/10 focus:border-blue-500' : 'bg-slate-50 border-slate-100 focus:border-blue-500'}
                     `}
                     placeholder="اكتب هنا أي تفاصيل تود مشاركتها مع فريق التنفيذ..."
                     value={serviceDetails}

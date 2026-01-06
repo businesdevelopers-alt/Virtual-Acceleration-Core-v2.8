@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Language, getTranslation } from '../services/i18nService';
 
@@ -17,6 +16,7 @@ interface LandingPageProps {
   onPartnerConcept: () => void;
   onAIMentorConcept: () => void;
   onForeignInvestment: () => void;
+  onServices: () => void;
   onLegalClick: (type: 'PRIVACY' | 'TERMS' | 'CONTACT') => void;
   onLogin?: () => void;
   lang: Language;
@@ -26,10 +26,11 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ 
   onStart, onQuickDemo, onRoadmap, onTools, onMentorship, onIncubation, 
   onMemberships, onPartnerConcept, onLogin, onAchievements,
-  onAIMentorConcept,
+  onAIMentorConcept, onServices,
   lang 
 }) => {
   const [scrolled, setScrolled] = useState(false);
+  const t = getTranslation(lang);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -52,10 +53,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h1 className="text-xl font-black tracking-tight uppercase leading-none">بيزنس ديفلوبرز</h1>
           </div>
           
-          <div className="hidden lg:flex items-center gap-10 font-bold text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
-             <button onClick={onIncubation} className="hover:text-blue-600 transition-colors">عن البرنامج</button>
-             <button onClick={onRoadmap} className="hover:text-blue-600 transition-colors">الخارطة</button>
-             <button onClick={onTools} className="hover:text-blue-600 transition-colors">الأدوات</button>
+          <div className="hidden lg:flex items-center gap-8 font-bold text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
+             <button onClick={onServices} className="text-blue-600 font-black hover:text-blue-700 transition-colors border-b-2 border-transparent hover:border-blue-600 pb-1">{t.nav.services}</button>
+             <button onClick={onIncubation} className="hover:text-blue-600 transition-colors">{t.nav.incubation}</button>
+             <button onClick={onRoadmap} className="hover:text-blue-600 transition-colors">{t.nav.roadmap}</button>
+             <button onClick={onTools} className="hover:text-blue-600 transition-colors">{t.nav.tools}</button>
              <button onClick={onAchievements} className="hover:text-blue-600 transition-colors">الأثر</button>
              <div className="w-px h-4 bg-slate-200 dark:bg-slate-800"></div>
              <button onClick={onQuickDemo} className="text-blue-600 hover:text-blue-700 transition-colors underline underline-offset-4">تجربة محاكاة</button>

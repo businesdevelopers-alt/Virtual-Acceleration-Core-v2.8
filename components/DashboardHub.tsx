@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { UserRole, UserProfile, LevelData, TaskRecord, ProgramRating, ACADEMY_BADGES, SECTORS, Notification } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
 import { storageService } from '../services/storageService';
-import { suggestIconsForLevels } from '../services/geminiService';
+import { suggestIconsForLevels, reviewDeliverableAI } from '../services/geminiService';
 import { LevelView } from './LevelView';
 import { ProgramEvaluation } from './ProgramEvaluation';
 import { Certificate } from './Certificate';
@@ -53,14 +54,14 @@ class AcceleratorCore {
 const bizDev = new AcceleratorCore("BIZ_DEV_SECURE_TOKEN");
 export default bizDev;`;
 
-// Map level IDs to highly relevant, unique premium icons
+// خريطة أيقونات مستويات خارطة الطريق لضمان الفرادة والارتباط بالمعنى
 const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🔍', // التحقق الاستراتيجي (Strategic Verification)
-  2: '📐', // هيكلة نموذج العمل (Business Model Structuring)
-  3: '🏗️', // هندسة المنتج MVP (MVP Engineering)
-  4: '📊', // تحليل الجدوى والنمو (Growth Analysis)
-  5: '💰', // النمذجة المالية (Financial Modeling)
-  6: '🚀'  // جاهزية الاستثمار (Investment Readiness)
+  1: '🔎', // Strategic Verification
+  2: '📐', // Business Model Structuring
+  3: '🏗️', // MVP Engineering
+  4: '📊', // Feasibility & Growth
+  5: '🏦', // Financial Modeling
+  6: '🚀'  // Investment Readiness
 };
 
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
@@ -72,6 +73,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
   const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
   const [showFullCert, setShowFullCert] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
   // Notifications state
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -188,6 +190,36 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }
   };
 
+  const handleAIGenerateSubmission = async (task: TaskRecord) => {
+    if (user.isDemo) {
+      alert("عذراً، لا يمكن استخدام ميزة التوليد الذكي في نمط الحساب التجريبي.");
+      return;
+    }
+    setIsGeneratingAI(true);
+    playPositiveSound();
+    
+    try {
+      const context = `Startup: ${profileData.startupName}, Industry: ${profileData.industry}, Mission: ${profileData.startupBio}`;
+      const review = await reviewDeliverableAI(task.title, task.description, context);
+      
+      const fileName = `AI_Generated_${task.title.replace(/\s+/g, '_')}.pdf`;
+      const dummyContent = `AI Generated Content for ${task.title}\n\nStrategic Depth Score: ${review.readinessScore}%\nReview Feedback: ${review.criticalFeedback}`;
+      
+      storageService.submitTask(user.uid, task.id, {
+        fileData: `data:application/pdf;base64,${btoa(unescape(encodeURIComponent(dummyContent)))}`,
+        fileName
+      }, { ...review, score: review.readinessScore });
+      
+      playCelebrationSound();
+      loadAllData();
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء التوليد الذكي للمخرج.");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const getGradientForColor = (color?: string) => {
     switch(color) {
       case 'blue': return 'from-blue-500 to-blue-700';
@@ -226,7 +258,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }
   };
 
-  /* Fix: Corrected reference to startup.website and startup.linkedin which were undefined. Used profileData instead. */
   const handleSaveProfile = () => {
     if (user.isDemo) {
       alert("عذراً، لا يمكن حفظ التغييرات الدائمة في نمط الحساب التجريبي.");
@@ -437,8 +468,9 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               {roadmap.map((level) => {
                 const isCurrent = !level.isCompleted && !level.isLocked;
                 const activeColorClass = getTailwindBgColor(level.customColor);
-                // Assign unique, relevant icon based on mapping
                 const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
+                const levelTask = tasks.find(t => t.levelId === level.id);
+                const canGenerate = levelTask && levelTask.status === 'ASSIGNED' && !level.isLocked && !level.isCompleted;
 
                 return (
                   <div 
@@ -472,10 +504,67 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                              <div className={`h-full transition-all duration-1000 ${level.isCompleted ? 'bg-emerald-500 w-full' : isCurrent ? `${activeColorClass} w-1/3 animate-pulse` : 'w-0'}`}></div>
                           </div>
                        </div>
+                       
+                       {canGenerate && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask); }}
+                            disabled={isGeneratingAI}
+                            className="w-full py-4 bg-blue-50 text-blue-600 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                          >
+                             {isGeneratingAI ? (
+                               <div className="w-4 h-4 border-2 border-blue-400 border-t-blue-600 rounded-full animate-spin"></div>
+                             ) : (
+                               <>
+                                 <span className="text-lg">✨</span>
+                                 <span>توليد المخرج آلياً (AI)</span>
+                               </>
+                             )}
+                          </button>
+                       )}
                     </div>
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className="max-w-5xl mx-auto space-y-10 animate-fade-up pb-20 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               {tasks.map(task => (
+                 <div key={task.id} className="p-10 rounded-[3rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-8">
+                         <span className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">المحطة 0{task.levelId}</span>
+                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border ${task.status === 'ASSIGNED' ? 'bg-blue-50 text-blue-600 border-blue-100' : task.status === 'SUBMITTED' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                           {task.status === 'APPROVED' ? 'مكتمل' : task.status === 'SUBMITTED' ? 'قيد المراجعة' : 'بانتظار التسليم'}
+                         </span>
+                      </div>
+                      <h4 className="text-2xl font-black mb-4 leading-tight text-slate-900">{task.title}</h4>
+                      <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">{task.description}</p>
+                    </div>
+
+                    {task.status === 'ASSIGNED' && (
+                       <div className="space-y-3">
+                          <button 
+                            onClick={() => handleAIGenerateSubmission(task)}
+                            disabled={isGeneratingAI}
+                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs hover:bg-black transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                          >
+                            {isGeneratingAI ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                              <>
+                                <span className="text-xl">✨</span>
+                                <span>توليد المخرج بواسطة AI</span>
+                              </>
+                            )}
+                          </button>
+                       </div>
+                    )}
+                 </div>
+               ))}
             </div>
           </div>
         )}

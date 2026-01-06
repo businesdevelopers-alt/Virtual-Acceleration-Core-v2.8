@@ -23,8 +23,8 @@ export const ACADEMY_BADGES: Badge[] = [
   { id: 'b1', levelId: 1, name: 'رائد أعمال طموح', icon: '🔍', description: 'اجتياز مرحلة التحقق الاستراتيجي من الفكرة.', color: 'from-blue-400 to-blue-600' },
   { id: 'b2', levelId: 2, name: 'مخطط استراتيجي', icon: '📐', description: 'إتقان صياغة نماذج العمل التجارية المبتكرة.', color: 'from-emerald-400 to-emerald-600' },
   { id: 'b3', levelId: 3, name: 'مهندس منتجات', icon: '🏗️', description: 'بناء النسخة الأولية القابلة للاختبار (MVP).', color: 'from-indigo-400 to-indigo-600' },
-  { id: 'b4', levelId: 4, name: 'محلل نمو', icon: '📊', description: 'فهم مؤشرات السوق وخطط الاستحواذ والنمو.', color: 'from-amber-400 to-amber-600' },
-  { id: 'b5', levelId: 5, name: 'خبير مالي', icon: '💰', description: 'بناء النماذج المالية وتوقعات التدفقات النقدية.', color: 'from-rose-400 to-rose-600' },
+  { id: 'b4', levelId: 4, name: 'محلل نمو', icon: '📈', description: 'فهم مؤشرات السوق وخطط الاستحواذ والنمو.', color: 'from-amber-400 to-amber-600' },
+  { id: 'b5', levelId: 5, name: 'خبير مالي', icon: '🏦', description: 'بناء النماذج المالية وتوقعات التدفقات النقدية.', color: 'from-rose-400 to-rose-600' },
   { id: 'b6', levelId: 6, name: 'رائد أعمال متمرس', icon: '🚀', description: 'الجاهزية التامة لعرض المشروع على المستثمرين.', color: 'from-slate-700 to-slate-900' }
 ];
 
@@ -44,6 +44,7 @@ export interface UserProfile {
   city?: string;
   isRemote?: boolean;
   agreedToTerms: boolean;
+  agreedToTermsAt?: string;
   agreedToContract: boolean;
   contractSignedAt?: string;
   isDemo?: boolean;
@@ -52,7 +53,6 @@ export interface UserProfile {
   startupType?: 'Startup' | 'Existing' | 'Tech';
   startupDescription?: string;
   startupBio?: string;
-  /* Changed companyIndustry to industry to match data model usage */
   industry?: string;
   startupStage?: string;
   logo?: string;
@@ -107,8 +107,8 @@ export const INITIAL_ROADMAP: LevelData[] = [
   { id: 1, title: 'التحقق الاستراتيجي', description: 'التثبت من وجود مشكلة حقيقية في السوق والتحقق من الفرضيات.', icon: '🔍', imageUrl: 'https://images.unsplash.com/photo-1454165833767-13143891bb39?auto=format&fit=crop&q=80&w=600', isLocked: false, isCompleted: false, customColor: 'blue' },
   { id: 2, title: 'هيكلة نموذج العمل', description: 'تصميم محرك الإيرادات والقيمة المضافة للمشروع.', icon: '📐', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'emerald' },
   { id: 3, title: 'هندسة المنتج (MVP)', description: 'تحديد المزايا الجوهرية وبناء النسخة الأولى القابلة للاختبار.', icon: '🏗️', imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'indigo' },
-  { id: 4, title: 'تحليل الجدوى والنمو', description: 'دراسة حجم السوق، المنافسين، وخطط الاستحواذ.', icon: '📊', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'amber' },
-  { id: 5, title: 'النمذجة المالية', description: 'التوقعات المالية، التقييم، والاحتياج التمويلي.', icon: '💰', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'rose' },
+  { id: 4, title: 'تحليل الجدوى والنمو', description: 'دراسة حجم السوق، المنافسين، وخطط الاستحواذ.', icon: '📈', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'amber' },
+  { id: 5, title: 'النمذجة المالية', description: 'التوقعات المالية، التقييم، والاحتياج التمويلي.', icon: '🏦', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'rose' },
   { id: 6, title: 'جاهزية الاستثمار', description: 'إعداد العرض التقديمي النهائي ومحاكاة لجان التحكيم.', icon: '🚀', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'slate' }
 ];
 
@@ -128,7 +128,8 @@ export enum FiltrationStage {
   FOREIGN_INVESTMENT = 'FOREIGN_INVESTMENT',
   PATH_FINDER = 'PATH_FINDER',
   STAFF_PORTAL = 'STAFF_PORTAL',
-  INCUBATION_APPLY = 'INCUBATION_APPLY'
+  INCUBATION_APPLY = 'INCUBATION_APPLY',
+  SERVICES = 'SERVICES'
 }
 
 export interface UserRecord {
@@ -332,6 +333,11 @@ export interface ProjectBuildData {
   description: string;
   quality: 'Quick' | 'Balanced' | 'Enhanced' | 'Professional' | 'Max';
   selectedAgents: string[];
+  projectFile?: {
+    data: string;
+    name: string;
+    type: string;
+  };
   results?: {
     vision?: string;
     marketAnalysis?: string;

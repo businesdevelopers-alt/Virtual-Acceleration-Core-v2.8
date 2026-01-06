@@ -109,9 +109,9 @@ export const AssessmentResult: React.FC<AssessmentResultProps> = ({ result, onCo
 
            <button 
              onClick={onContinue}
-             className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4
+             className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-3xl transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4
                ${result.isQualified 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20' 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30' 
                 : 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20'
                }`}
            >
