@@ -1,4 +1,3 @@
-
 export type UserRole = 'STARTUP' | 'PARTNER' | 'MENTOR' | 'ADMIN';
 
 export interface Badge {
@@ -21,12 +20,12 @@ export interface Notification {
 }
 
 export const ACADEMY_BADGES: Badge[] = [
-  { id: 'b1', levelId: 1, name: 'رائد أعمال طموح', icon: '🔭', description: 'اجتياز مرحلة التحقق الاستراتيجي من الفكرة.', color: 'from-blue-400 to-blue-600' },
-  { id: 'b2', levelId: 2, name: 'مخطط استراتيجي', icon: '🧩', description: 'إتقان صياغة نماذج العمل التجارية المبتكرة.', color: 'from-emerald-400 to-emerald-600' },
-  { id: 'b3', levelId: 3, name: 'مهندس منتجات', icon: '🛠️', description: 'بناء النسخة الأولية القابلة للاختبار (MVP).', color: 'from-indigo-400 to-indigo-600' },
-  { id: 'b4', levelId: 4, name: 'محلل نمو', icon: '📈', description: 'فهم مؤشرات السوق وخطط الاستحواذ والنمو.', color: 'from-amber-400 to-amber-600' },
-  { id: 'b5', levelId: 5, name: 'خبير مالي', icon: '💎', description: 'بناء النماذج المالية وتوقعات التدفقات النقدية.', color: 'from-rose-400 to-rose-600' },
-  { id: 'b6', levelId: 6, name: 'رائد أعمال متمرس', icon: '🤝', description: 'الجاهزية التامة لعرض المشروع على المستثمرين.', color: 'from-slate-700 to-slate-900' }
+  { id: 'b1', levelId: 1, name: 'رائد أعمال طموح', icon: '🔍', description: 'اجتياز مرحلة التحقق الاستراتيجي من الفكرة.', color: 'from-blue-400 to-blue-600' },
+  { id: 'b2', levelId: 2, name: 'مخطط استراتيجي', icon: '📐', description: 'إتقان صياغة نماذج العمل التجارية المبتكرة.', color: 'from-emerald-400 to-emerald-600' },
+  { id: 'b3', levelId: 3, name: 'مهندس منتجات', icon: '🏗️', description: 'بناء النسخة الأولية القابلة للاختبار (MVP).', color: 'from-indigo-400 to-indigo-600' },
+  { id: 'b4', levelId: 4, name: 'محلل نمو', icon: '📊', description: 'فهم مؤشرات السوق وخطط الاستحواذ والنمو.', color: 'from-amber-400 to-amber-600' },
+  { id: 'b5', levelId: 5, name: 'خبير مالي', icon: '💰', description: 'بناء النماذج المالية وتوقعات التدفقات النقدية.', color: 'from-rose-400 to-rose-600' },
+  { id: 'b6', levelId: 6, name: 'رائد أعمال متمرس', icon: '🚀', description: 'الجاهزية التامة لعرض المشروع على المستثمرين.', color: 'from-slate-700 to-slate-900' }
 ];
 
 export interface Partner {
@@ -105,12 +104,12 @@ export interface TaskRecord {
 }
 
 export const INITIAL_ROADMAP: LevelData[] = [
-  { id: 1, title: 'التحقق الاستراتيجي', description: 'التثبت من وجود مشكلة حقيقية في السوق والتحقق من الفرضيات.', icon: '🔭', imageUrl: 'https://images.unsplash.com/photo-1454165833767-13143891bb39?auto=format&fit=crop&q=80&w=600', isLocked: false, isCompleted: false, customColor: 'blue' },
-  { id: 2, title: 'هيكلة نموذج العمل', description: 'تصميم محرك الإيرادات والقيمة المضافة للمشروع.', icon: '🧩', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'emerald' },
-  { id: 3, title: 'هندسة المنتج (MVP)', description: 'تحديد المزايا الجوهرية وبناء النسخة الأولى القابلة للاختبار.', icon: '🛠️', imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'indigo' },
-  { id: 4, title: 'تحليل الجدوى والنمو', description: 'دراسة حجم السوق، المنافسين، وخطط الاستحواذ.', icon: '📈', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'amber' },
-  { id: 5, title: 'النمذجة المالية', description: 'التوقعات المالية، التقييم، والاحتياج التمويلي.', icon: '💎', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'rose' },
-  { id: 6, title: 'جاهزية الاستثمار', description: 'إعداد العرض التقديمي النهائي ومحاكاة لجان التحكيم.', icon: '🤝', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'slate' }
+  { id: 1, title: 'التحقق الاستراتيجي', description: 'التثبت من وجود مشكلة حقيقية في السوق والتحقق من الفرضيات.', icon: '🔍', imageUrl: 'https://images.unsplash.com/photo-1454165833767-13143891bb39?auto=format&fit=crop&q=80&w=600', isLocked: false, isCompleted: false, customColor: 'blue' },
+  { id: 2, title: 'هيكلة نموذج العمل', description: 'تصميم محرك الإيرادات والقيمة المضافة للمشروع.', icon: '📐', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'emerald' },
+  { id: 3, title: 'هندسة المنتج (MVP)', description: 'تحديد المزايا الجوهرية وبناء النسخة الأولى القابلة للاختبار.', icon: '🏗️', imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'indigo' },
+  { id: 4, title: 'تحليل الجدوى والنمو', description: 'دراسة حجم السوق، المنافسين، وخطط الاستحواذ.', icon: '📊', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'amber' },
+  { id: 5, title: 'النمذجة المالية', description: 'التوقعات المالية، التقييم، والاحتياج التمويلي.', icon: '💰', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'rose' },
+  { id: 6, title: 'جاهزية الاستثمار', description: 'إعداد العرض التقديمي النهائي ومحاكاة لجان التحكيم.', icon: '🚀', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80&w=600', isLocked: true, isCompleted: false, customColor: 'slate' }
 ];
 
 export enum FiltrationStage { 
@@ -204,9 +203,9 @@ export interface MatchResult {
 }
 
 export const DIGITAL_SHIELDS = [
-  { id: 's1', name: 'التحقق الاستراتيجي', icon: '🔭', color: 'from-blue-400 to-blue-600' },
-  { id: 's2', name: 'هيكلة الأعمال', icon: '🧩', color: 'from-emerald-400 to-emerald-600' },
-  { id: 's3', name: 'هندسة المنتج', icon: '🛠️', color: 'from-indigo-400 to-indigo-600' },
+  { id: 's1', name: 'التحقق الاستراتيجي', icon: '🔍', color: 'from-blue-400 to-blue-600' },
+  { id: 's2', name: 'هيكلة الأعمال', icon: '📐', color: 'from-emerald-400 to-emerald-600' },
+  { id: 's3', name: 'هندسة المنتج', icon: '🏗️', color: 'from-indigo-400 to-indigo-600' },
 ];
 
 export const SECTORS = [
@@ -326,6 +325,7 @@ export interface AIAgent {
   name: string;
   description: string;
   category: AgentCategory;
+  capabilities: string[];
 }
 export interface ProjectBuildData {
   projectName: string;
@@ -342,10 +342,34 @@ export interface ProjectBuildData {
 }
 
 export const AVAILABLE_AGENTS: AIAgent[] = [
-  { id: 'a1', name: 'Visionary Architect', description: 'Crafts the long-term vision and core strategy.', category: 'Vision' },
-  { id: 'a2', name: 'Market Analyst', description: 'Analyzes market trends and competitive landscape.', category: 'Market' },
-  { id: 'a3', name: 'User Experience Strategist', description: 'Defines user personas and product flow.', category: 'User' },
-  { id: 'a4', name: 'Growth Hacker', description: 'Identifies expansion opportunities and scaling paths.', category: 'Opportunity' },
+  { 
+    id: 'a1', 
+    name: 'مهندس الاستراتيجية', 
+    description: 'خبير في صياغة الرؤى طويلة المدى وبناء القيم الجوهرية للمشاريع الناشئة.', 
+    category: 'Vision',
+    capabilities: ['صياغة Mission & Vision', 'تحديد المبادئ التوجيهية', 'بناء فلسفة العلامة']
+  },
+  { 
+    id: 'a2', 
+    name: 'محلل الأسواق', 
+    description: 'متخصص في تحليل الاتجاهات العالمية وفحص الفجوات التنافسية في السوق المحلي والدولي.', 
+    category: 'Market',
+    capabilities: ['تحليل SWOT المعمق', 'تقدير TAM/SAM/SOM', 'تحديد نقاط ضعف المنافسين']
+  },
+  { 
+    id: 'a3', 
+    name: 'مصمم رحلة المستخدم', 
+    description: 'يصمم التفاعلات الجوهرية ويضمن مواءمة المنتج مع احتياجات العميل الحقيقية.', 
+    category: 'User',
+    capabilities: ['بناء ملفات العميل (Personas)', 'رسم خرائط التعاطف', 'هندسة رحلة المستخدم المثالية']
+  },
+  { 
+    id: 'a4', 
+    name: 'خبير النمو السريع', 
+    description: 'يحدد مسارات التوسع ويقترح استراتيجيات الاستحواذ على العملاء بأقل تكلفة.', 
+    category: 'Opportunity',
+    capabilities: ['قنوات الاستحواذ (Acquisition)', 'نمذجة محركات الانتشار', 'استراتيجيات التحجيم (Scaling)']
+  },
 ];
 
 export interface FailureSimulation {

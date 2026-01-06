@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { UserRole, UserProfile, LevelData, TaskRecord, ProgramRating, ACADEMY_BADGES, SECTORS, Notification } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
@@ -53,6 +52,16 @@ class AcceleratorCore {
 
 const bizDev = new AcceleratorCore("BIZ_DEV_SECURE_TOKEN");
 export default bizDev;`;
+
+// Map level IDs to highly relevant, unique premium icons
+const LEVEL_ICON_MAP: Record<number, string> = {
+  1: '🔍', // التحقق الاستراتيجي (Strategic Verification)
+  2: '📐', // هيكلة نموذج العمل (Business Model Structuring)
+  3: '🏗️', // هندسة المنتج MVP (MVP Engineering)
+  4: '📊', // تحليل الجدوى والنمو (Growth Analysis)
+  5: '💰', // النمذجة المالية (Financial Modeling)
+  6: '🚀'  // جاهزية الاستثمار (Investment Readiness)
+};
 
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'roadmap' | 'tasks' | 'profile' | 'documents' | 'evaluation' | 'lab'>('roadmap');
@@ -120,12 +129,11 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     return () => window.removeEventListener('new-notification', handleNewNotif);
   }, [user.uid]);
 
-  // Simulated Deadline Check - Logic Refinement
+  // Simulated Deadline Check
   useEffect(() => {
     const checkDeadlines = () => {
       const assignedTasks = tasks.filter(t => t.status === 'ASSIGNED');
       if (assignedTasks.length > 0) {
-        // Only notify if no recent warning exists
         const lastWarning = notifications.find(n => n.type === 'WARNING' && n.title.includes('موعد'));
         const isOldWarning = lastWarning ? (Date.now() - new Date(lastWarning.createdAt).getTime() > 3600000) : true;
 
@@ -139,8 +147,8 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
       }
     };
 
-    const interval = setInterval(checkDeadlines, 300000); // Check every 5 mins
-    checkDeadlines(); // Initial check
+    const interval = setInterval(checkDeadlines, 300000);
+    checkDeadlines();
     return () => clearInterval(interval);
   }, [tasks, notifications]);
 
@@ -204,18 +212,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }
   };
 
-  const getTailwindShadowColor = (color?: string) => {
-    switch(color) {
-      case 'blue': return 'shadow-blue-500/30';
-      case 'emerald': return 'shadow-emerald-500/30';
-      case 'indigo': return 'shadow-indigo-500/30';
-      case 'amber': return 'shadow-amber-500/30';
-      case 'rose': return 'shadow-rose-500/30';
-      case 'slate': return 'shadow-slate-500/30';
-      default: return 'shadow-blue-500/30';
-    }
-  };
-
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -230,6 +226,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }
   };
 
+  /* Fix: Corrected reference to startup.website and startup.linkedin which were undefined. Used profileData instead. */
   const handleSaveProfile = () => {
     if (user.isDemo) {
       alert("عذراً، لا يمكن حفظ التغييرات الدائمة في نمط الحساب التجريبي.");
@@ -415,7 +412,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
 
         {activeTab === 'roadmap' && (
           <div className="space-y-12 animate-fade-up">
-            {/* Roadmap Logic - Existing */}
+            {/* Roadmap Progress Bar */}
             <div className="relative pt-8 pb-12 px-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                   <div className="h-full bg-blue-600 transition-all duration-1000 ease-out" style={{width: `${stats.progress}%`}}></div>
@@ -440,7 +437,9 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               {roadmap.map((level) => {
                 const isCurrent = !level.isCompleted && !level.isLocked;
                 const activeColorClass = getTailwindBgColor(level.customColor);
-                const activeShadowClass = getTailwindShadowColor(level.customColor);
+                // Assign unique, relevant icon based on mapping
+                const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
+
                 return (
                   <div 
                     key={level.id}
@@ -449,13 +448,12 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                       ${level.isLocked ? 'opacity-60 grayscale cursor-not-allowed' : 'cursor-pointer hover:-translate-y-4 hover:shadow-3xl hover:border-blue-200'}
                     `}
                   >
-                    {/* Level Card UI - Existing */}
                     <div className="aspect-[16/10] relative overflow-hidden">
                        <img src={level.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
                        <div className={`absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent transition-opacity ${level.isLocked ? 'opacity-80' : 'opacity-60'}`}></div>
                        <div className="absolute top-6 right-6 flex flex-col items-end gap-3">
                           <div className={`w-16 h-16 bg-gradient-to-br ${getGradientForColor(level.customColor)} rounded-[1.8rem] flex items-center justify-center text-4xl shadow-2xl text-white transform group-hover:rotate-6 transition-transform`}>
-                            {level.isCompleted ? '✓' : level.icon}
+                            {level.isCompleted ? '✓' : levelIcon}
                           </div>
                        </div>
                        <div className="absolute bottom-8 left-8 right-8 text-right">
@@ -552,11 +550,19 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         )}
 
         {activeTab === 'documents' && (
-          <DocumentsPortal 
-            user={profileData} 
-            progress={stats.progress} 
-            onShowCertificate={() => setShowFullCert(true)} 
-          />
+          <div className="space-y-10 animate-fade-up">
+            <DocumentsPortal 
+              user={profileData} 
+              progress={stats.progress} 
+              onShowCertificate={() => setShowFullCert(true)} 
+            />
+          </div>
+        )}
+
+        {activeTab === 'evaluation' && (
+          <div className="max-w-2xl mx-auto w-full py-10 animate-fade-up">
+            <ProgramEvaluation onClose={() => setActiveTab('roadmap')} onSubmit={(r) => { storageService.saveProgramRating(user.uid, r); setExistingRating(r); setActiveTab('roadmap'); }} />
+          </div>
         )}
 
         {showFullCert && (

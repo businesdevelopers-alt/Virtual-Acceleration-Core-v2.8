@@ -64,6 +64,10 @@
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
       }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
       .stagger-load > * {
         opacity: 0;
         animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
@@ -74,6 +78,18 @@
       .stagger-load > *:nth-child(4) { animation-delay: 0.4s; }
 
       .animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+      .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+
+      /* تحسين تأثير النقر ليصبح أكثر انسيابية وسلاسة */
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30.transition-all.transform.hover\:scale-\[1\.02\].active\:scale-95.flex.items-center.justify-center.gap-4,
+      .active\:scale-95 {
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease !important;
+      }
+      
+      .active\:scale-95:active {
+        transform: scale(0.95) !important;
+        transition: transform 0.1s cubic-bezier(0.1, 0.7, 0.1, 1) !important;
+      }
 
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 10px; }

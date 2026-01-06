@@ -1,6 +1,5 @@
 
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
 import { Language, getTranslation } from '../services/i18nService';
@@ -34,14 +33,24 @@ const STAGE_OPTIONS = [
   { value: 'InvestReady', label: 'جاهز للاستثمار (Invest Ready)' }
 ];
 
+const CITY_OPTIONS = [
+  "الرياض، السعودية", "جدة، السعودية", "الدمام، السعودية", "دبي، الإمارات", "أبوظبي، الإمارات",
+  "المنامة، البحرين", "الدوحة، قطر", "الكويت العاصمة، الكويت", "مسقط، عمان",
+  "القاهرة، مصر", "الإسكندرية، مصر", "عمان، الأردن", "بيروت، لبنان", 
+  "بغداد، العراق", "الدار البيضاء، المغرب", "تونس العاصمة، تونس", "الجزائر العاصمة، الجزائر"
+];
+
 export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', onRegister, onStaffLogin, lang }) => {
   const t = getTranslation(lang);
   const [step, setStep] = useState(1);
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState('');
+  const cityRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState<UserProfile>({
     firstName: '', lastName: '', email: '', phone: '', city: '', 
     agreedToTerms: false, agreedToContract: false,
     startupName: '', startupDescription: '',
-    /* Changed companyIndustry to industry to match type updates */
     industry: 'AI', startupStage: 'Idea',
     existingRoles: [], missingRoles: [], supportNeeded: [], mentorExpertise: [], mentorSectors: [],
     skills: []
@@ -52,6 +61,20 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
     PARTNER: { title: 'شريك استراتيجي', color: 'emerald', icon: '🤝', total: 3 },
     MENTOR: { title: 'مرشد خبير', color: 'purple', icon: '🧠', total: 3 }
   }[role] || { title: 'تسجيل', color: 'blue', icon: '🚀', total: 3 };
+
+  const filteredCities = useMemo(() => {
+    return CITY_OPTIONS.filter(city => city.toLowerCase().includes(citySearch.toLowerCase()));
+  }, [citySearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
+        setIsCityOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleNext = () => { 
     if (step < roleMeta.total) {
@@ -108,6 +131,46 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                   </div>
                   <input className={inputClass} placeholder="البريد الإلكتروني الرسمي" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   <input className={inputClass} placeholder="رقم الجوال" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  
+                  {/* Searchable City Dropdown */}
+                  <div className="relative" ref={cityRef}>
+                    <div 
+                      onClick={() => setIsCityOpen(!isCityOpen)}
+                      className={`${inputClass} flex justify-between items-center cursor-pointer ${!formData.city ? 'text-slate-300 dark:text-slate-700' : ''}`}
+                    >
+                      <span>{formData.city || "المدينة / الدولة"}</span>
+                      <svg className={`w-5 h-5 transition-transform duration-300 ${isCityOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    
+                    {isCityOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-3xl z-50 overflow-hidden animate-fade-in">
+                        <div className="p-4 border-b border-slate-100 dark:border-white/5">
+                           <input 
+                            autoFocus
+                            className="w-full p-4 bg-slate-50 dark:bg-white/5 rounded-xl outline-none text-sm font-bold" 
+                            placeholder="ابحث عن مدينتك..." 
+                            value={citySearch}
+                            onChange={e => setCitySearch(e.target.value)}
+                           />
+                        </div>
+                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                           {filteredCities.length > 0 ? (
+                             filteredCities.map(city => (
+                               <button 
+                                key={city}
+                                onClick={() => { setFormData({...formData, city}); setIsCityOpen(false); setCitySearch(''); }}
+                                className="w-full p-5 text-right hover:bg-primary hover:text-white transition-colors font-bold text-sm border-b border-slate-50 dark:border-white/5 last:border-none"
+                               >
+                                 {city}
+                               </button>
+                             ))
+                           ) : (
+                             <div className="p-10 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">لا توجد نتائج</div>
+                           )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -119,7 +182,6 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                    <div className="space-y-2">
                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-4">قطاع الشركة</label>
                      <div className="relative">
-                        {/* Changed companyIndustry to industry */}
                         <select className={selectClass} value={formData.industry} onChange={e => setFormData({...formData, industry: e.target.value})}>
                           {INDUSTRY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -147,12 +209,15 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                       <span className="font-black text-slate-900 dark:text-white">{formData.firstName} {formData.lastName}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
+                      <span className="font-bold text-slate-500">الموقع:</span>
+                      <span className="font-black text-slate-900 dark:text-white">{formData.city}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
                       <span className="font-bold text-slate-500">المشروع:</span>
                       <span className="font-black text-slate-900 dark:text-white">{formData.startupName}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
                       <span className="font-bold text-slate-500">القطاع:</span>
-                      {/* Changed companyIndustry to industry */}
                       <span className="font-black text-primary">{INDUSTRY_OPTIONS.find(o => o.value === formData.industry)?.label}</span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -173,9 +238,9 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
               <button 
                 onClick={handleNext} 
                 disabled={step === 3 && !formData.agreedToTerms}
-                className="w-full py-7 bg-primary text-white rounded-[2.2rem] font-black text-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-50"
+                className="w-full py-7 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-[2.2rem] font-black text-2xl shadow-2xl shadow-purple-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-50"
               >
-                <span>{step === roleMeta.total ? 'إتمام التسجيل' : 'المتابعة للمرحلة التالية'}</span>
+                <span className="animate-fade-in">{step === roleMeta.total ? 'إتمام التسجيل' : 'المتابعة للمرحلة التالية'}</span>
                 <svg className="w-8 h-8 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               </button>
            </div>
