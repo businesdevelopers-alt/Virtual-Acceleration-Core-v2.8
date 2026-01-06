@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { FinalResult } from '../../types';
 import { playCelebrationSound, playErrorSound } from '../../services/audioService';
@@ -109,9 +108,9 @@ export const AssessmentResult: React.FC<AssessmentResultProps> = ({ result, onCo
 
            <button 
              onClick={onContinue}
-             className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-3xl transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4
+             className={`w-full py-6 rounded-[2rem] font-black text-xl shadow-3xl transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale-[0.5] flex items-center justify-center gap-4
                ${result.isQualified 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30' 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30 shadow-blue-500/30 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4' 
                 : 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20'
                }`}
            >

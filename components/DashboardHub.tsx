@@ -56,12 +56,12 @@ export default bizDev;`;
 
 // خريطة أيقونات مستويات خارطة الطريق لضمان الفرادة والارتباط بالمعنى
 const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🔎', // Strategic Verification
-  2: '📐', // Business Model Structuring
-  3: '🏗️', // MVP Engineering
-  4: '📊', // Feasibility & Growth
-  5: '🏦', // Financial Modeling
-  6: '🚀'  // Investment Readiness
+  1: '🎯', // التحقق الاستراتيجي
+  2: '📋', // هيكلة نموذج العمل
+  3: '🛠️', // هندسة المنتج
+  4: '📈', // تحليل الجدوى والنمو
+  5: '💰', // النمذجة المالية
+  6: '🚀'  // جاهزية الاستثمار
 };
 
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
@@ -145,7 +145,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         if (isOldWarning) {
           storageService.addNotification(user.uid, {
             title: 'اقتراب موعد التسليم النهائي',
-            message: `تنبيه استراتيجي: لديك ${assignedTasks.length} مهام نشطة تتطلب التسليم خلال الساعات القادمة لضمان بقاء نقاط الجاهزية مرتفعة.`,
+            message: `تنبيه استراتيجي: لديك ${assignedTasks.length} مهام نشطة تتطلب التسليم خلال الساعات القادمة لضمان بقاء نقاط الجايزية مرتفعة.`,
             type: 'WARNING'
           });
         }
@@ -572,6 +572,10 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                  <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-3xl mb-12">
                    استخدم مختبر الأكواد لمراجعة البنية التقنية لمشروعك، أو صياغة العقود الذكية، أو حتى تجربة منطق عمل الـ MVP الخاص بك.
                  </p>
+                 <div className="p-4 bg-slate-800 rounded-3xl border border-white/10 mb-8 flex items-center gap-4 text-sm font-bold text-blue-300">
+                    <span className="text-xl">💡</span>
+                    نصيحة تقنية: تأكد من مواءمة بنية البيانات مع معايير الأمان العالمية قبل التوسع.
+                 </div>
                  <CodeEditor 
                    code={DEFAULT_DEV_CODE} 
                    language="typescript" 
