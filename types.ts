@@ -459,3 +459,10 @@ export const TEMPLATES_LIBRARY: Template[] = [
     ]
   }
 ];
+
+export interface SudokuStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  totalTimeSeconds: number;
+  bestTimeSeconds: number | null;
+}

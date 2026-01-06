@@ -1,12 +1,13 @@
 
-import { UserRecord, StartupRecord, UserProfile, TaskRecord, INITIAL_ROADMAP, LevelData, ACADEMY_BADGES, ServiceRequest, ProgramRating, PartnerProfile } from '../types';
+import { UserRecord, StartupRecord, UserProfile, TaskRecord, INITIAL_ROADMAP, LevelData, ACADEMY_BADGES, ServiceRequest, ProgramRating, PartnerProfile, SudokuStats } from '../types';
 
 const DB_KEYS = {
   USERS: 'db_users',
   STARTUPS: 'db_startups',
   TASKS: 'db_tasks',
   ROADMAP: 'db_roadmap',
-  SESSION: 'db_current_session'
+  SESSION: 'db_current_session',
+  SUDOKU_STATS: 'db_sudoku_stats'
 };
 
 const safeSetItem = (key: string, value: string): boolean => {
@@ -241,6 +242,28 @@ export const storageService = {
 
   getAllUsers: (): UserRecord[] => JSON.parse(localStorage.getItem(DB_KEYS.USERS) || '[]'),
   getAllStartups: (): StartupRecord[] => JSON.parse(localStorage.getItem(DB_KEYS.STARTUPS) || '[]'),
+
+  getSudokuStats: (uid: string): SudokuStats => {
+    const allStats = JSON.parse(localStorage.getItem(DB_KEYS.SUDOKU_STATS) || '{}');
+    return allStats[uid] || { gamesPlayed: 0, gamesWon: 0, totalTimeSeconds: 0, bestTimeSeconds: null };
+  },
+
+  updateSudokuStats: (uid: string, win: boolean, timeSeconds?: number) => {
+    const allStats = JSON.parse(localStorage.getItem(DB_KEYS.SUDOKU_STATS) || '{}');
+    const current = allStats[uid] || { gamesPlayed: 0, gamesWon: 0, totalTimeSeconds: 0, bestTimeSeconds: null };
+    
+    current.gamesPlayed += 1;
+    if (win && timeSeconds !== undefined) {
+      current.gamesWon += 1;
+      current.totalTimeSeconds += timeSeconds;
+      if (current.bestTimeSeconds === null || timeSeconds < current.bestTimeSeconds) {
+        current.bestTimeSeconds = timeSeconds;
+      }
+    }
+    
+    allStats[uid] = current;
+    safeSetItem(DB_KEYS.SUDOKU_STATS, JSON.stringify(allStats));
+  },
   
   seedDemoAccounts: () => {
     if (localStorage.getItem(DB_KEYS.USERS)) return;

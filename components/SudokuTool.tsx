@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { generateSudokuAI } from '../services/geminiService';
 import { playPositiveSound, playCelebrationSound, playErrorSound } from '../services/audioService';
+import { storageService } from '../services/storageService';
+import { SudokuStats } from '../types';
 
 interface SudokuToolProps {
   onBack: () => void;
@@ -17,12 +19,40 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [isGameWon, setIsGameWon] = useState(false);
+  
+  // Stats & Timer
+  const [timer, setTimer] = useState(0);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [stats, setStats] = useState<SudokuStats | null>(null);
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    const session = storageService.getCurrentSession();
+    if (session) {
+      setCurrentUserUid(session.uid);
+      setStats(storageService.getSudokuStats(session.uid));
+    }
+  }, []);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isTimerActive) {
+      interval = window.setInterval(() => {
+        setTimer(t => t + 1);
+      }, 1000);
+    } else {
+      window.clearInterval(interval);
+    }
+    return () => window.clearInterval(interval);
+  }, [isTimerActive]);
 
   const startNewGame = async (diff: Difficulty) => {
     setIsLoading(true);
     setDifficulty(diff);
     setIsGameWon(false);
     setSelectedCell(null);
+    setTimer(0);
+    setIsTimerActive(false);
     playPositiveSound();
 
     try {
@@ -30,6 +60,13 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
       setBoard(JSON.parse(JSON.stringify(data.puzzle)));
       setInitialBoard(JSON.parse(JSON.stringify(data.puzzle)));
       setSolution(data.solution);
+      setIsTimerActive(true);
+      
+      if (currentUserUid) {
+        // Log game attempt (win=false initially)
+        storageService.updateSudokuStats(currentUserUid, false);
+        setStats(storageService.getSudokuStats(currentUserUid));
+      }
     } catch (e) {
       alert("فشل توليد اللغز. حاول مرة أخرى.");
       setDifficulty(null);
@@ -43,7 +80,7 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
     const [r, c] = selectedCell;
     if (initialBoard[r][c] !== 0) return;
 
-    const newBoard = [...board];
+    const newBoard = [...board.map(row => [...row])];
     newBoard[r][c] = num;
     setBoard(newBoard);
 
@@ -60,18 +97,52 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
     
     if (isFull && isCorrect) {
       setIsGameWon(true);
+      setIsTimerActive(false);
       playCelebrationSound();
+      
+      if (currentUserUid) {
+        storageService.updateSudokuStats(currentUserUid, true, timer);
+        setStats(storageService.getSudokuStats(currentUserUid));
+      }
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const winRate = stats ? (stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0) : 0;
+  const avgTime = stats ? (stats.gamesWon > 0 ? Math.round(stats.totalTimeSeconds / stats.gamesWon) : 0) : 0;
+
   if (!difficulty) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-10 py-20 animate-fade-up">
+      <div className="space-y-12 py-10 animate-fade-up">
         <div className="text-center space-y-4">
            <h2 className="text-4xl font-black text-slate-900 dark:text-white">تدريب المنطق والتركيز</h2>
            <p className="text-slate-500 max-w-md mx-auto">تعتبر السودوكو أداة ممتازة لرواد الأعمال لتعزيز مهارات حل المشكلات والتفكير الاستراتيجي.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-2xl">
+
+        {/* Performance Dashboard */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+             {[
+               { label: 'عدد المحاولات', value: stats.gamesPlayed, icon: '🎮', color: 'text-blue-600' },
+               { label: 'معدل الفوز', value: `${winRate}%`, icon: '🏆', color: 'text-emerald-600' },
+               { label: 'أفضل زمن', value: stats.bestTimeSeconds ? formatTime(stats.bestTimeSeconds) : '--', icon: '⏱️', color: 'text-amber-600' },
+               { label: 'متوسط الزمن', value: avgTime > 0 ? formatTime(avgTime) : '--', icon: '📊', color: 'text-indigo-600' }
+             ].map((stat, i) => (
+               <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm text-center">
+                  <div className="text-2xl mb-2">{stat.icon}</div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                  <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+               </div>
+             ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-2xl mx-auto">
            {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(diff => (
              <button
                key={diff}
@@ -104,6 +175,17 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
     <div className="flex flex-col lg:flex-row gap-12 py-10 animate-fade-in items-start justify-center">
       {/* Sudoku Grid */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/5">
+        <div className="flex justify-between items-center mb-6 px-2">
+           <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">{formatTime(timer)}</span>
+           </div>
+           <div className="flex items-center gap-2">
+              <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${difficulty === 'Easy' ? 'bg-emerald-50 text-emerald-600' : difficulty === 'Medium' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-600'}`}>
+                {difficulty === 'Easy' ? 'سهل' : difficulty === 'Medium' ? 'متوسط' : 'صعب'}
+              </span>
+           </div>
+        </div>
         <div className="grid grid-cols-9 border-4 border-slate-900 dark:border-white/20">
           {board.map((row, ri) => row.map((cell, ci) => {
             const isInitial = initialBoard[ri][ci] !== 0;
@@ -133,14 +215,17 @@ export const SudokuTool: React.FC<SudokuToolProps> = ({ onBack }) => {
       <div className="space-y-10 w-full max-w-sm">
         <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-6 shadow-xl">
            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">مستوى الصعوبة</span>
-              <span className="font-black">{difficulty === 'Easy' ? 'سهل' : difficulty === 'Medium' ? 'متوسط' : 'صعب'}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">تحكم السودوكو</span>
+              <button onClick={() => { setIsTimerActive(!isTimerActive); playPositiveSound(); }} className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                {isTimerActive ? '⏸️ إيقاف مؤقت' : '▶️ استئناف'}
+              </button>
            </div>
            
            {isGameWon ? (
              <div className="text-center py-6 space-y-4">
                 <div className="text-5xl">🏆</div>
                 <h3 className="text-2xl font-black text-emerald-400">رائع! تم حل اللغز</h3>
+                <p className="text-slate-400 text-sm">الزمن المحقق: {formatTime(timer)}</p>
                 <button onClick={() => setDifficulty(null)} className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black hover:scale-105 transition-all">العودة للاختيار</button>
              </div>
            ) : (
