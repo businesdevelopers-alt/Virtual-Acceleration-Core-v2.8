@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
@@ -12,25 +13,24 @@ interface RegistrationProps {
 }
 
 const INDUSTRY_OPTIONS = [
-  { value: 'Technology', label: 'التقنية والبرمجيات' },
-  { value: 'Fintech', label: 'التقنية المالية' },
-  { value: 'Ecommerce', label: 'التجارة الإلكترونية' },
-  { value: 'Healthcare', label: 'الرعاية الصحية' },
-  { value: 'Education', label: 'التعليم' },
-  { value: 'Logistics', label: 'الخدمات اللوجستية' },
-  { value: 'Industrial', label: 'القطاع الصناعي' },
-  { value: 'Food', label: 'الأغذية والمشروبات' },
-  { value: 'Energy', label: 'الطاقة والاستدامة' },
-  { value: 'RealEstate', label: 'العقارات والإنشاءات' },
-  { value: 'Media', label: 'الإعلام والترفيه' }
+  { value: 'AI', label: 'الذكاء الاصطناعي (AI & ML)' },
+  { value: 'Fintech', label: 'التقنية المالية (Fintech)' },
+  { value: 'HealthTech', label: 'الرعاية الصحية (HealthTech)' },
+  { value: 'CleanTech', label: 'الطاقة والاستدامة (CleanTech)' },
+  { value: 'EdTech', label: 'التعليم والتدريب (EdTech)' },
+  { value: 'Logistics', label: 'الخدمات اللوجستية (Logistics)' },
+  { value: 'Blockchain', label: 'البلوكشين والويب ٣ (Web3)' },
+  { value: 'Ecommerce', label: 'التجارة الإلكترونية (E-commerce)' },
+  { value: 'Industrial', label: 'القطاع الصناعي (Industry 4.0)' },
+  { value: 'AgTech', label: 'التقنيات الزراعية (AgTech)' }
 ];
 
 const STAGE_OPTIONS = [
-  { value: 'Idea', label: 'فكرة (Idea)' },
+  { value: 'Idea', label: 'فكرة مصاغة (Discovery)' },
   { value: 'Prototype', label: 'نموذج أولي (Prototype)' },
-  { value: 'MVP', label: 'منتج أولي (MVP)' },
-  { value: 'Traction', label: 'نمو أولي (Traction)' },
-  { value: 'Growth', label: 'توسع (Growth)' },
+  { value: 'MVP', label: 'منتج أولي (MVP Stage)' },
+  { value: 'Traction', label: 'نمو أولي (Validation)' },
+  { value: 'Scaling', label: 'توسع وانتشار (Scaling)' },
   { value: 'InvestReady', label: 'جاهز للاستثمار (Invest Ready)' }
 ];
 
@@ -40,8 +40,9 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
   const [formData, setFormData] = useState<UserProfile>({
     firstName: '', lastName: '', email: '', phone: '', city: '', 
     agreedToTerms: false, agreedToContract: false,
-    startupName: '', startupDescription: '', industry: 'Technology',
-    companyIndustry: 'Technology', startupStage: 'Idea',
+    startupName: '', startupDescription: '',
+    /* Changed companyIndustry to industry to match type updates */
+    industry: 'AI', startupStage: 'Idea',
     existingRoles: [], missingRoles: [], supportNeeded: [], mentorExpertise: [], mentorSectors: [],
     skills: []
   });
@@ -118,7 +119,8 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                    <div className="space-y-2">
                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-4">قطاع الشركة</label>
                      <div className="relative">
-                        <select className={selectClass} value={formData.companyIndustry} onChange={e => setFormData({...formData, companyIndustry: e.target.value})}>
+                        {/* Changed companyIndustry to industry */}
+                        <select className={selectClass} value={formData.industry} onChange={e => setFormData({...formData, industry: e.target.value})}>
                           {INDUSTRY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
                         <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">▼</div>
@@ -150,7 +152,8 @@ export const Registration: React.FC<RegistrationProps> = ({ role = 'STARTUP', on
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
                       <span className="font-bold text-slate-500">القطاع:</span>
-                      <span className="font-black text-primary">{INDUSTRY_OPTIONS.find(o => o.value === formData.companyIndustry)?.label}</span>
+                      {/* Changed companyIndustry to industry */}
+                      <span className="font-black text-primary">{INDUSTRY_OPTIONS.find(o => o.value === formData.industry)?.label}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-slate-500">المرحلة:</span>

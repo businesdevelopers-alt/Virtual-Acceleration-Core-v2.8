@@ -1,5 +1,5 @@
 
-import { UserRecord, StartupRecord, UserProfile, TaskRecord, INITIAL_ROADMAP, LevelData, ACADEMY_BADGES, ServiceRequest, ProgramRating, PartnerProfile, SudokuStats } from '../types';
+import { UserRecord, StartupRecord, UserProfile, TaskRecord, INITIAL_ROADMAP, LevelData, ACADEMY_BADGES, ServiceRequest, ProgramRating, PartnerProfile, SudokuStats, Notification } from '../types';
 
 const DB_KEYS = {
   USERS: 'db_users',
@@ -7,7 +7,8 @@ const DB_KEYS = {
   TASKS: 'db_tasks',
   ROADMAP: 'db_roadmap',
   SESSION: 'db_current_session',
-  SUDOKU_STATS: 'db_sudoku_stats'
+  SUDOKU_STATS: 'db_sudoku_stats',
+  NOTIFICATIONS: 'db_notifications'
 };
 
 const safeSetItem = (key: string, value: string): boolean => {
@@ -68,6 +69,13 @@ export const storageService = {
       }));
       const allTasks = JSON.parse(localStorage.getItem(DB_KEYS.TASKS) || '[]');
       safeSetItem(DB_KEYS.TASKS, JSON.stringify([...allTasks, ...initialTasks]));
+
+      // Welcome Notification
+      storageService.addNotification(uid, {
+        title: 'أهلاً بك في المسرعة!',
+        message: 'تم تفعيل مسارك التدريبي بنجاح. ابدأ بمرحلة التحقق الاستراتيجي.',
+        type: 'SUCCESS'
+      });
     }
 
     const users = JSON.parse(localStorage.getItem(DB_KEYS.USERS) || '[]');
@@ -97,6 +105,33 @@ export const storageService = {
     
     const { user, startup } = storageService.registerUser(demoProfile);
     return { uid: user.uid, projectId: startup?.projectId || '' };
+  },
+
+  addNotification: (uid: string, data: Partial<Notification>) => {
+    const all = JSON.parse(localStorage.getItem(DB_KEYS.NOTIFICATIONS) || '[]');
+    const newNotif: Notification = {
+      id: `n_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      uid,
+      title: data.title || 'تنبيه جديد',
+      message: data.message || '',
+      type: data.type || 'INFO',
+      isRead: false,
+      createdAt: new Date().toISOString()
+    };
+    safeSetItem(DB_KEYS.NOTIFICATIONS, JSON.stringify([newNotif, ...all]));
+    // Dispatch custom event for live toast updates
+    window.dispatchEvent(new CustomEvent('new-notification', { detail: newNotif }));
+  },
+
+  getNotifications: (uid: string): Notification[] => {
+    const all = JSON.parse(localStorage.getItem(DB_KEYS.NOTIFICATIONS) || '[]');
+    return all.filter((n: Notification) => n.uid === uid);
+  },
+
+  markNotificationAsRead: (id: string) => {
+    const all = JSON.parse(localStorage.getItem(DB_KEYS.NOTIFICATIONS) || '[]');
+    const updated = all.map((n: Notification) => n.id === id ? { ...n, isRead: true } : n);
+    safeSetItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(updated));
   },
 
   updateUserBadges: (uid: string, badgeId: string) => {
@@ -130,6 +165,12 @@ export const storageService = {
       return t;
     });
     safeSetItem(DB_KEYS.TASKS, JSON.stringify(updatedTasks));
+    
+    storageService.addNotification(uid, {
+      title: 'تم استلام المخرج',
+      message: `تم رفع مخرج المهمة "${updatedTasks.find(t => t.id === taskId)?.title}" للمراجعة الاستراتيجية.`,
+      type: 'INFO'
+    });
   },
 
   updateUser: (uid: string, data: Partial<UserRecord>) => {
@@ -223,6 +264,30 @@ export const storageService = {
       return l;
     });
     safeSetItem(`${DB_KEYS.ROADMAP}_${uid}`, JSON.stringify(updatedRoadmap));
+
+    storageService.addNotification(uid, {
+      title: 'تمت الموافقة على المخرج!',
+      message: `مبروك! تم قبول مخرج المهمة "${currentTask.title}". تم فتح المحطة التالية لك الآن.`,
+      type: 'SUCCESS'
+    });
+  },
+
+  rejectTask: (uid: string, taskId: string, feedback: string) => {
+    const allTasks: TaskRecord[] = JSON.parse(localStorage.getItem(DB_KEYS.TASKS) || '[]');
+    const currentTask = allTasks.find(t => t.id === taskId);
+    if (!currentTask) return;
+
+    const updatedTasks = allTasks.map(t => {
+      if (t.id === taskId) return { ...t, status: 'REJECTED' as const };
+      return t;
+    });
+    safeSetItem(DB_KEYS.TASKS, JSON.stringify(updatedTasks));
+
+    storageService.addNotification(uid, {
+      title: 'ملاحظات على المخرج',
+      message: `تمت مراجعة المهمة "${currentTask.title}" وبحاجة لبعض التعديلات: ${feedback}`,
+      type: 'WARNING'
+    });
   },
 
   getCurrentRoadmap: (uid: string): LevelData[] => {

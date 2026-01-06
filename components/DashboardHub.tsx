@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { UserRole, UserProfile, LevelData, TaskRecord, ProgramRating, ACADEMY_BADGES, SECTORS } from '../types';
+import { UserRole, UserProfile, LevelData, TaskRecord, ProgramRating, ACADEMY_BADGES, SECTORS, Notification } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
 import { storageService } from '../services/storageService';
 import { suggestIconsForLevels } from '../services/geminiService';
@@ -8,6 +8,8 @@ import { LevelView } from './LevelView';
 import { ProgramEvaluation } from './ProgramEvaluation';
 import { Certificate } from './Certificate';
 import { DocumentsPortal } from './DocumentsPortal';
+import { CodeEditor } from './CodeEditor';
+import { NotificationCenter } from './NotificationCenter';
 
 interface DashboardHubProps {
   user: UserProfile & { uid: string; role: UserRole; startupId?: string };
@@ -16,8 +18,44 @@ interface DashboardHubProps {
   onNavigateToStage: (stage: any) => void;
 }
 
+const DEFAULT_DEV_CODE = `/**
+ * Startup Logic Engine v1.0
+ * Sector: AI & Fintech
+ * Core logic for the automated acceleration protocol.
+ */
+
+interface Startup {
+  id: string;
+  name: string;
+  stage: 'Discovery' | 'Prototype' | 'MVP' | 'Scaling';
+  metrics: {
+    readiness: number;
+    marketFit: number;
+  };
+}
+
+class AcceleratorCore {
+  private startups: Startup[] = [];
+
+  constructor(private api_key: string) {}
+
+  public async evaluateProject(project: Startup): Promise<number> {
+    console.log(\`Analyzing project: \${project.name}\`);
+    
+    // AI Decision Logic
+    if (project.metrics.readiness > 85) {
+       return 100; // Ready for Investment
+    }
+    
+    return project.metrics.readiness * 1.1;
+  }
+}
+
+const bizDev = new AcceleratorCore("BIZ_DEV_SECURE_TOKEN");
+export default bizDev;`;
+
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'tasks' | 'profile' | 'documents' | 'evaluation' | 'settings'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'tasks' | 'profile' | 'documents' | 'evaluation' | 'lab'>('roadmap');
   const [roadmap, setRoadmap] = useState<LevelData[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<LevelData | null>(null);
@@ -26,40 +64,85 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
   const [showFullCert, setShowFullCert] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   
+  // Notifications state
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifCenter, setShowNotifCenter] = useState(false);
+  const [activeToast, setActiveToast] = useState<Notification | null>(null);
+
   const [profileData, setProfileData] = useState<UserProfile>(user);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const loadData = () => {
-      const currentRoadmap = storageService.getCurrentRoadmap(user.uid);
-      setRoadmap(currentRoadmap);
-      setTasks(storageService.getUserTasks(user.uid));
-      setExistingRating(storageService.getProgramRating(user.uid));
-      
-      const users = storageService.getAllUsers();
-      const currentUser = users.find((u: any) => u.uid === user.uid) as any;
-      if (currentUser) {
-        setEarnedBadgeIds(currentUser.earnedBadges || []);
-      }
+  const loadAllData = () => {
+    const currentRoadmap = storageService.getCurrentRoadmap(user.uid);
+    setRoadmap(currentRoadmap);
+    setTasks(storageService.getUserTasks(user.uid));
+    setExistingRating(storageService.getProgramRating(user.uid));
+    setNotifications(storageService.getNotifications(user.uid));
+    
+    const users = storageService.getAllUsers();
+    const currentUser = users.find((u: any) => u.uid === user.uid) as any;
+    if (currentUser) {
+      setEarnedBadgeIds(currentUser.earnedBadges || []);
+    }
 
-      const startups = storageService.getAllStartups();
-      const startup = startups.find(s => s.projectId === user.startupId);
-      if (startup && currentUser) {
-        setProfileData({
-          ...currentUser,
-          startupName: startup.name,
-          startupDescription: startup.description,
-          industry: startup.industry || 'Artificial Intelligence (AI)',
-          website: startup.website,
-          linkedin: startup.linkedin,
-          startupBio: startup.startupBio,
-          logo: localStorage.getItem(`logo_${user.uid}`) || undefined
-        });
+    const startups = storageService.getAllStartups();
+    const startup = startups.find(s => s.projectId === user.startupId);
+    if (startup && currentUser) {
+      setProfileData({
+        ...currentUser,
+        startupName: startup.name,
+        startupDescription: startup.description,
+        industry: startup.industry || 'AI',
+        startupStage: (startup as any).currentTrack || 'Idea',
+        website: startup.website,
+        linkedin: startup.linkedin,
+        startupBio: startup.startupBio,
+        logo: localStorage.getItem(`logo_${user.uid}`) || undefined
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadAllData();
+
+    // Listen for new notifications to show toast
+    const handleNewNotif = (e: any) => {
+      const newNotif = e.detail as Notification;
+      if (newNotif.uid === user.uid) {
+        setActiveToast(newNotif);
+        loadAllData();
+        setTimeout(() => setActiveToast(null), 5000);
       }
     };
-    loadData();
-  }, [user.uid, user.startupId, activeTab]);
+
+    window.addEventListener('new-notification', handleNewNotif);
+    return () => window.removeEventListener('new-notification', handleNewNotif);
+  }, [user.uid]);
+
+  // Simulated Deadline Check - Logic Refinement
+  useEffect(() => {
+    const checkDeadlines = () => {
+      const assignedTasks = tasks.filter(t => t.status === 'ASSIGNED');
+      if (assignedTasks.length > 0) {
+        // Only notify if no recent warning exists
+        const lastWarning = notifications.find(n => n.type === 'WARNING' && n.title.includes('موعد'));
+        const isOldWarning = lastWarning ? (Date.now() - new Date(lastWarning.createdAt).getTime() > 3600000) : true;
+
+        if (isOldWarning) {
+          storageService.addNotification(user.uid, {
+            title: 'اقتراب موعد التسليم النهائي',
+            message: `تنبيه استراتيجي: لديك ${assignedTasks.length} مهام نشطة تتطلب التسليم خلال الساعات القادمة لضمان بقاء نقاط الجاهزية مرتفعة.`,
+            type: 'WARNING'
+          });
+        }
+      }
+    };
+
+    const interval = setInterval(checkDeadlines, 300000); // Check every 5 mins
+    checkDeadlines(); // Initial check
+    return () => clearInterval(interval);
+  }, [tasks, notifications]);
 
   const stats = useMemo(() => {
     const completed = roadmap.filter(l => l.isCompleted).length;
@@ -174,6 +257,8 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }, 800);
   };
 
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
   if (selectedLevel) {
     return (
       <LevelView 
@@ -191,6 +276,26 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
 
   return (
     <div className="min-h-screen bg-slate-50 flex" dir="rtl">
+      {/* Live Notification Toast */}
+      {activeToast && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[300] w-full max-w-md animate-fade-in-down px-4">
+           <div className={`p-6 rounded-[2rem] shadow-3xl border-4 flex items-center gap-5 transition-all
+              ${activeToast.type === 'SUCCESS' ? 'bg-emerald-600 border-emerald-400 text-white' : 
+                activeToast.type === 'WARNING' ? 'bg-amber-500 border-amber-300 text-white' : 
+                'bg-blue-600 border-blue-400 text-white'}
+           `}>
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shrink-0">
+                {activeToast.type === 'SUCCESS' ? '✅' : activeToast.type === 'WARNING' ? '⚠️' : 'ℹ️'}
+              </div>
+              <div>
+                 <p className="font-black text-sm uppercase tracking-wider">{activeToast.title}</p>
+                 <p className="text-xs font-medium opacity-90 leading-relaxed mt-1">{activeToast.message}</p>
+              </div>
+              <button onClick={() => setActiveToast(null)} className="ml-auto p-2 hover:bg-white/10 rounded-lg">✕</button>
+           </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-72 bg-white border-l border-slate-200 flex flex-col shadow-sm sticky top-0 h-screen">
         <div className="p-8 border-b border-slate-100">
@@ -215,6 +320,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
            {[
              { id: 'roadmap', label: 'خارطة الطريق', icon: '🛣️' },
              { id: 'tasks', label: 'مركز المخرجات', icon: '📥' },
+             { id: 'lab', label: 'المختبر التقني', icon: '💻' },
              { id: 'profile', label: 'ملف الشركة', icon: '🏢' },
              { id: 'documents', label: 'الوثائق الرسمية', icon: '📜' },
              { id: 'evaluation', label: 'تقييم البرنامج', icon: '⭐' }
@@ -233,12 +339,12 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         </nav>
 
         <div className="p-6 border-t border-slate-100">
-           <button onClick={onLogout} className="w-full p-4 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 rounded-2xl transition-all">تسجيل الخروج</button>
+           <button onClick={onLogout} className="w-full p-4 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose 50 rounded-2xl transition-all">تسجيل الخروج</button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col p-10 overflow-y-auto">
+      <main className="flex-1 flex flex-col p-10 overflow-y-auto relative">
         {user.isDemo && (
           <div className="mb-10 p-4 bg-amber-50 border border-amber-200 rounded-3xl flex items-center justify-between animate-pulse">
              <div className="flex items-center gap-4">
@@ -252,11 +358,12 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
           </div>
         )}
 
-        <header className="flex justify-between items-center mb-12">
+        <header className="flex justify-between items-center mb-12 relative">
            <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tight">
                 {activeTab === 'roadmap' ? 'منهج التسريع المكثف' : 
                  activeTab === 'tasks' ? 'تسليم المخرجات' : 
+                 activeTab === 'lab' ? 'المختبر التقني الذكي' :
                  activeTab === 'profile' ? 'ملف الشركة' :
                  activeTab === 'documents' ? 'مركز الوثائق الرسمية' :
                  activeTab === 'evaluation' ? 'تقييم التجربة الريادية' : 'إعدادات الحساب'}
@@ -266,14 +373,37 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               </p>
            </div>
            
-           <div className="flex gap-4">
+           <div className="flex gap-4 items-center">
+              <div className="relative">
+                <button 
+                  onClick={() => { setShowNotifCenter(!showNotifCenter); playPositiveSound(); }}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all relative
+                    ${unreadCount > 0 ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}
+                  `}
+                >
+                  <span className="text-xl">🔔</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {showNotifCenter && (
+                  <NotificationCenter 
+                    notifications={notifications} 
+                    onUpdate={loadAllData} 
+                    onClose={() => setShowNotifCenter(false)} 
+                  />
+                )}
+              </div>
+
               {activeTab === 'roadmap' && (
                 <button 
                   onClick={handleOptimizeUI} 
                   disabled={isOptimizing}
                   className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl shadow-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                 >
-                  {isOptimizing ? 'جاري التحسين...' : '✨ تحسين بصري بالذكاء الاصطناعي'}
+                  {isOptimizing ? 'جاري التحسين...' : '✨ تحسين بصري بالذكاء اصطناعي'}
                 </button>
               )}
               <div className="px-6 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col items-center">
@@ -285,6 +415,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
 
         {activeTab === 'roadmap' && (
           <div className="space-y-12 animate-fade-up">
+            {/* Roadmap Logic - Existing */}
             <div className="relative pt-8 pb-12 px-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                   <div className="h-full bg-blue-600 transition-all duration-1000 ease-out" style={{width: `${stats.progress}%`}}></div>
@@ -304,13 +435,12 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                   ))}
                </div>
             </div>
-
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-20">
               {roadmap.map((level) => {
                 const isCurrent = !level.isCompleted && !level.isLocked;
                 const activeColorClass = getTailwindBgColor(level.customColor);
                 const activeShadowClass = getTailwindShadowColor(level.customColor);
-                
                 return (
                   <div 
                     key={level.id}
@@ -319,66 +449,61 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                       ${level.isLocked ? 'opacity-60 grayscale cursor-not-allowed' : 'cursor-pointer hover:-translate-y-4 hover:shadow-3xl hover:border-blue-200'}
                     `}
                   >
+                    {/* Level Card UI - Existing */}
                     <div className="aspect-[16/10] relative overflow-hidden">
                        <img src={level.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
                        <div className={`absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent transition-opacity ${level.isLocked ? 'opacity-80' : 'opacity-60'}`}></div>
-                       
                        <div className="absolute top-6 right-6 flex flex-col items-end gap-3">
                           <div className={`w-16 h-16 bg-gradient-to-br ${getGradientForColor(level.customColor)} rounded-[1.8rem] flex items-center justify-center text-4xl shadow-2xl text-white transform group-hover:rotate-6 transition-transform`}>
                             {level.isCompleted ? '✓' : level.icon}
                           </div>
-                          {level.isCompleted && (
-                            <span className="px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-xl shadow-lg uppercase tracking-[0.2em]">Validated</span>
-                          )}
                        </div>
-
                        <div className="absolute bottom-8 left-8 right-8 text-right">
                           <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] mb-1"> المحطة 0{level.id}</p>
                           <h3 className="text-2xl font-black text-white leading-tight">{level.title}</h3>
                        </div>
                     </div>
-
                     <div className="p-10 space-y-8">
                        <p className="text-slate-500 text-sm font-medium leading-relaxed line-clamp-2">{level.description}</p>
-                       
                        <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
                              <span>حالة التقدم</span>
-                             <span className={isCurrent ? 'text-blue-600 font-black' : ''}>
-                                {level.isCompleted ? '100%' : level.isLocked ? '0%' : 'المرحلة النشطة'}
-                             </span>
+                             <span className={isCurrent ? 'text-blue-600 font-black' : ''}>{level.isCompleted ? '100%' : 'نشط'}</span>
                           </div>
-                          <div className={`h-3 rounded-full overflow-hidden transition-all duration-500 ${isCurrent ? 'bg-slate-100 ring-4 ring-slate-50' : 'bg-slate-100'}`}>
-                             <div 
-                                className={`h-full transition-all duration-1000 ${
-                                  level.isCompleted ? 'bg-emerald-500 w-full' : 
-                                  level.isLocked ? 'w-0' : 
-                                  `${activeColorClass} w-1/3 animate-pulse shadow-[0_0_15px_rgba(37,99,235,0.4)] ${activeShadowClass}`
-                                }`}
-                             ></div>
+                          <div className={`h-3 rounded-full overflow-hidden bg-slate-100`}>
+                             <div className={`h-full transition-all duration-1000 ${level.isCompleted ? 'bg-emerald-500 w-full' : isCurrent ? `${activeColorClass} w-1/3 animate-pulse` : 'w-0'}`}></div>
                           </div>
-                       </div>
-
-                       <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
-                          <div className="flex -space-x-2 space-x-reverse overflow-hidden">
-                             {[1, 2, 3].map(i => (
-                               <div key={i} className={`w-3 h-3 rounded-full border-2 border-white transition-all duration-500 ${level.isCompleted ? 'bg-emerald-400' : isCurrent ? `${activeColorClass} animate-bounce` : 'bg-slate-200'}`} style={{animationDelay: `${i*0.2}s`}}></div>
-                             ))}
-                          </div>
-                          {!level.isLocked ? (
-                            <button className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${isCurrent ? `${activeColorClass} text-white shadow-xl ${activeShadowClass}` : 'bg-slate-950 text-white group-hover:bg-blue-600'}`}>
-                              {level.isCompleted ? 'مراجعة المواد' : 'بدء المرحلة'}
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-2 text-slate-300 font-black text-[10px] uppercase">
-                               🔒 محطة مغلقة
-                            </div>
-                          )}
                        </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'lab' && (
+          <div className="space-y-10 animate-fade-up">
+            <div className="bg-slate-900 p-8 md:p-12 rounded-[4rem] border border-white/5 shadow-3xl text-right relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+               <div className="relative z-10">
+                 <div className="flex items-center gap-6 mb-10">
+                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-4xl shadow-2xl">🧑‍💻</div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white">بيئة تطوير المشروع (Dev Studio)</h3>
+                       <p className="text-blue-400 font-bold text-xs uppercase tracking-widest mt-1">Advanced Startup Architecture</p>
+                    </div>
+                 </div>
+                 <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-3xl mb-12">
+                   استخدم مختبر الأكواد لمراجعة البنية التقنية لمشروعك، أو صياغة العقود الذكية، أو حتى تجربة منطق عمل الـ MVP الخاص بك.
+                 </p>
+                 <CodeEditor 
+                   code={DEFAULT_DEV_CODE} 
+                   language="typescript" 
+                   theme="vs-dark" 
+                   height="600px"
+                 />
+               </div>
             </div>
           </div>
         )}
@@ -405,12 +530,14 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                           <label className={labelClass}>البريد الإلكتروني</label>
-                           <input type="email" className={inputClass} value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} />
+                           <label className={labelClass}>القطاع</label>
+                           <select className={inputClass} value={profileData.industry} onChange={e => setProfileData({...profileData, industry: e.target.value})}>
+                              {SECTORS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                           </select>
                         </div>
                         <div className="space-y-2">
-                           <label className={labelClass}>رقم الجوال</label>
-                           <input className={inputClass} value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} />
+                           <label className={labelClass}>البريد الإلكتروني</label>
+                           <input type="email" className={inputClass} value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} />
                         </div>
                      </div>
                   </div>

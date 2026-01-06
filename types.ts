@@ -10,6 +10,16 @@ export interface Badge {
   color: string;
 }
 
+export interface Notification {
+  id: string;
+  uid: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'SUCCESS' | 'WARNING';
+  isRead: boolean;
+  createdAt: string;
+}
+
 export const ACADEMY_BADGES: Badge[] = [
   { id: 'b1', levelId: 1, name: 'رائد أعمال طموح', icon: '🔭', description: 'اجتياز مرحلة التحقق الاستراتيجي من الفكرة.', color: 'from-blue-400 to-blue-600' },
   { id: 'b2', levelId: 2, name: 'مخطط استراتيجي', icon: '🧩', description: 'إتقان صياغة نماذج العمل التجارية المبتكرة.', color: 'from-emerald-400 to-emerald-600' },
@@ -43,9 +53,8 @@ export interface UserProfile {
   startupType?: 'Startup' | 'Existing' | 'Tech';
   startupDescription?: string;
   startupBio?: string;
+  /* Changed companyIndustry to industry to match data model usage */
   industry?: string;
-  companyIndustry?: string;
-  stage?: 'Idea' | 'MVP' | 'Growth' | 'InvestReady';
   startupStage?: string;
   logo?: string;
   partners?: Partner[];
