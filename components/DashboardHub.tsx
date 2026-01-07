@@ -54,14 +54,13 @@ class AcceleratorCore {
 const bizDev = new AcceleratorCore("BIZ_DEV_SECURE_TOKEN");
 export default bizDev;`;
 
-// خريطة أيقونات مستويات خارطة الطريق لضمان الفرادة والارتباط بالمعنى
 const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🎯', // التحقق الاستراتيجي
-  2: '📋', // هيكلة نموذج العمل
-  3: '🛠️', // هندسة المنتج
-  4: '📈', // تحليل الجدوى والنمو
-  5: '💰', // النمذجة المالية
-  6: '🚀'  // جاهزية الاستثمار
+  1: '🎯',
+  2: '📋',
+  3: '🛠️',
+  4: '📈',
+  5: '💰',
+  6: '🚀'
 };
 
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
@@ -75,7 +74,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
-  // Notifications state
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifCenter, setShowNotifCenter] = useState(false);
   const [activeToasts, setActiveToasts] = useState<Notification[]>([]);
@@ -116,8 +114,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
 
   useEffect(() => {
     loadAllData();
-
-    // Listen for new notifications to show toast
     const handleNewNotif = (e: any) => {
       const newNotif = e.detail as Notification;
       if (newNotif.uid === user.uid) {
@@ -125,7 +121,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         loadAllData();
       }
     };
-
     window.addEventListener('new-notification', handleNewNotif);
     return () => window.removeEventListener('new-notification', handleNewNotif);
   }, [user.uid]);
@@ -134,14 +129,12 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     setActiveToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Simulated Deadline Check
   useEffect(() => {
     const checkDeadlines = () => {
       const assignedTasks = tasks.filter(t => t.status === 'ASSIGNED');
       if (assignedTasks.length > 0) {
         const lastWarning = notifications.find(n => n.type === 'WARNING' && n.title.includes('موعد'));
         const isOldWarning = lastWarning ? (Date.now() - new Date(lastWarning.createdAt).getTime() > 3600000) : true;
-
         if (isOldWarning) {
           storageService.addNotification(user.uid, {
             title: 'اقتراب موعد التسليم النهائي',
@@ -151,7 +144,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         }
       }
     };
-
     const interval = setInterval(checkDeadlines, 300000);
     checkDeadlines();
     return () => clearInterval(interval);
@@ -174,7 +166,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         name: profileData.startupName, 
         industry: profileData.industry 
       });
-      
       const updatedRoadmap = roadmap.map(level => {
         const suggestion = result.suggestions.find((s: any) => s.levelId === level.id);
         if (suggestion) {
@@ -182,7 +173,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
         }
         return level;
       });
-
       setRoadmap(updatedRoadmap);
       localStorage.setItem(`db_roadmap_${user.uid}`, JSON.stringify(updatedRoadmap));
       playCelebrationSound();
@@ -200,22 +190,16 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
     }
     setIsGeneratingAI(true);
     playPositiveSound();
-    
     try {
       const context = `Startup: ${profileData.startupName}, Industry: ${profileData.industry}, Mission: ${profileData.startupBio}`;
       const review = await reviewDeliverableAI(task.title, task.description, context);
-      
       const fileName = `AI_Generated_${task.title.replace(/\s+/g, '_')}.pdf`;
       const dummyContent = `AI Generated Content for ${task.title}\n\nStrategic Depth Score: ${review.readinessScore}%\nReview Feedback: ${review.criticalFeedback}`;
-      
       storageService.submitTask(user.uid, task.id, {
         fileData: `data:application/pdf;base64,${btoa(unescape(encodeURIComponent(dummyContent)))}`,
         fileName
       }, { ...review, score: review.readinessScore });
-      
-      // Auto-approve after AI generation to speed up progress
       storageService.approveTask(user.uid, task.id);
-      
       playCelebrationSound();
       loadAllData();
     } catch (e) {
@@ -284,7 +268,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
       linkedin: profileData.linkedin,
       startupBio: profileData.startupBio
     });
-    
     setTimeout(() => {
       setIsSaving(false);
       playCelebrationSound();
@@ -311,8 +294,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
   return (
     <div className="min-h-screen bg-slate-50 flex" dir="rtl">
       <ToastContainer toasts={activeToasts} onClose={removeToast} />
-
-      {/* Sidebar */}
       <aside className="w-72 bg-white border-l border-slate-200 flex flex-col shadow-sm sticky top-0 h-screen">
         <div className="p-8 border-b border-slate-100">
            <div className="flex items-center gap-3 mb-8">
@@ -331,7 +312,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               </div>
            </div>
         </div>
-
         <nav className="flex-1 p-4 space-y-2 mt-4">
            {[
              { id: 'roadmap', label: 'خارطة الطريق', icon: '🛣️' },
@@ -353,13 +333,10 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
              </button>
            ))}
         </nav>
-
         <div className="p-6 border-t border-slate-100">
-           <button onClick={onLogout} className="w-full p-4 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose 50 rounded-2xl transition-all">تسجيل الخروج</button>
+           <button onClick={onLogout} className="w-full p-4 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 rounded-2xl transition-all">تسجيل الخروج</button>
         </div>
       </aside>
-
-      {/* Main Content */}
       <main className="flex-1 flex flex-col p-10 overflow-y-auto relative">
         {user.isDemo && (
           <div className="mb-10 p-4 bg-amber-50 border border-amber-200 rounded-3xl flex items-center justify-between animate-pulse">
@@ -373,7 +350,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
              <button onClick={onLogout} className="px-6 py-2 bg-amber-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-800 transition-all">سجل حسابك الحقيقي</button>
           </div>
         )}
-
         <header className="flex justify-between items-center mb-12 relative">
            <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tight">
@@ -388,7 +364,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                 {activeTab === 'roadmap' ? 'تتبع رحلتك نحو الجاهزية الاستثمارية من خلال المحطات الست' : `أهلاً بك، ${user.firstName}.`}
               </p>
            </div>
-           
            <div className="flex gap-4 items-center">
               <div className="relative">
                 <button 
@@ -412,7 +387,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                   />
                 )}
               </div>
-
               {activeTab === 'roadmap' && (
                 <button 
                   onClick={handleOptimizeUI} 
@@ -428,10 +402,8 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               </div>
            </div>
         </header>
-
         {activeTab === 'roadmap' && (
           <div className="space-y-12 animate-fade-up">
-            {/* Roadmap Progress Bar */}
             <div className="relative pt-8 pb-12 px-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                   <div className="h-full bg-blue-600 transition-all duration-1000 ease-out" style={{width: `${stats.progress}%`}}></div>
@@ -451,7 +423,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                   ))}
                </div>
             </div>
-            {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-20">
               {roadmap.map((level) => {
                 const isCurrent = !level.isCompleted && !level.isLocked;
@@ -459,7 +430,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                 const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
                 const levelTask = tasks.find(t => t.levelId === level.id);
                 const canGenerate = levelTask && !['APPROVED', 'SUBMITTED'].includes(levelTask.status);
-
                 return (
                   <div 
                     key={level.id}
@@ -492,7 +462,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                              <div className={`h-full transition-all duration-1000 ${level.isCompleted ? 'bg-emerald-500 w-full' : isCurrent ? `${activeColorClass} w-1/3 animate-pulse` : 'w-0'}`}></div>
                           </div>
                        </div>
-                       
                        {canGenerate && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask); }}
@@ -504,7 +473,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                              ) : (
                                <>
                                  <span className="text-lg">✨</span>
-                                 <span>توليد المخرج آلياً (AI)</span>
+                                 <span>توليد المخرج بواسطة AI</span>
                                </>
                              )}
                           </button>
@@ -516,7 +485,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
             </div>
           </div>
         )}
-
         {activeTab === 'tasks' && (
           <div className="max-w-5xl mx-auto space-y-10 animate-fade-up pb-20 w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -532,7 +500,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
                       <h4 className="text-2xl font-black mb-4 leading-tight text-slate-900">{task.title}</h4>
                       <p className="text-sm text-slate-500 mb-10 leading-relaxed font-medium">{task.description}</p>
                     </div>
-
                     {!['APPROVED', 'SUBMITTED'].includes(task.status) && (
                        <div className="space-y-3">
                           <button 
@@ -556,7 +523,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
             </div>
           </div>
         )}
-
         {activeTab === 'lab' && (
           <div className="space-y-10 animate-fade-up">
             <div className="bg-slate-900 p-8 md:p-12 rounded-[4rem] border border-white/5 shadow-3xl text-right relative overflow-hidden">
@@ -586,7 +552,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
             </div>
           </div>
         )}
-
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto w-full space-y-10 animate-fade-up pb-20">
              <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm space-y-10">
@@ -629,7 +594,6 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
             </div>
           </div>
         )}
-
         {activeTab === 'documents' && (
           <div className="space-y-10 animate-fade-up">
             <DocumentsPortal 
@@ -639,13 +603,11 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
             />
           </div>
         )}
-
         {activeTab === 'evaluation' && (
           <div className="max-w-2xl mx-auto w-full py-10 animate-fade-up">
             <ProgramEvaluation onClose={() => setActiveTab('roadmap')} onSubmit={(r) => { storageService.saveProgramRating(user.uid, r); setExistingRating(r); setActiveTab('roadmap'); }} />
           </div>
         )}
-
         {showFullCert && (
           <Certificate user={profileData} onClose={() => setShowFullCert(false)} />
         )}

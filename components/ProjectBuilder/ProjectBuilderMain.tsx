@@ -119,7 +119,7 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
             { id: 3, label: 'العرض التقديمي', icon: '🚀' },
             { id: 4, label: 'الاعتماد النهائي', icon: '✅' }
           ].map((s) => (
-            <div key={s.id} className={`p-5 rounded-[1.8rem] border-2 transition-all flex items-center gap-4 ${step === s.id ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20' : 'bg-slate-50 border-transparent opacity-40'}`}>
+            <div key={s.id} className={`p-5 rounded-[1.8rem] border-2 transition-all flex items-center gap-4 ${step === s.id ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20' : 'bg-slate-50 border-transparent opacity-40'}`}>
                <span className="text-xl">{s.icon}</span>
                <div>
                  <p className="text-[10px] font-black uppercase opacity-60">Phase 0{s.id}</p>
@@ -141,9 +141,11 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
                   <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">تكوين النواة الرقمية</h1>
                   <p className="text-slate-500 text-xl font-medium">اختر الوكلاء الأنسب لتفكيك وتطوير رؤية مشروعك.</p>
                 </div>
-                <div className="bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div className="bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 transition-all">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">الفريق المختار:</span>
-                  <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg">{formData.selectedAgents.length}</span>
+                  <span className={`w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg transition-transform duration-300 ${formData.selectedAgents.length > 0 ? 'scale-110' : 'scale-100'}`}>
+                    {formData.selectedAgents.length}
+                  </span>
                 </div>
               </div>
 
@@ -183,8 +185,8 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
                           <button 
                             key={agent.id}
                             onClick={() => toggleAgent(agent.id)}
-                            className={`p-8 rounded-[3.5rem] border-4 text-right transition-all group relative overflow-hidden flex flex-col gap-4 min-h-[340px]
-                              ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-600/30 ring-8 ring-blue-500/5' : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-slate-200/50'}
+                            className={`p-8 rounded-[3.5rem] border-4 text-right transition-all group relative overflow-hidden flex flex-col gap-4 min-h-[360px]
+                              ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-600/30 ring-8 ring-blue-500/5' : 'bg-white border-slate-100 hover:border-blue-300 hover:shadow-2xl hover:shadow-slate-200/40'}
                             `}
                           >
                             <div className="flex justify-between items-start">
@@ -196,24 +198,32 @@ export const ProjectBuilderMain: React.FC<ProjectBuilderProps> = ({ onComplete, 
                                </div>
                             </div>
                             
-                            <div>
+                            <div className="relative">
                                <h4 className="text-2xl font-black">{agent.name}</h4>
-                               <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mt-2 ${isSelected ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                               <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mt-2 transition-colors ${isSelected ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600'}`}>
                                   <span className="w-1 h-1 rounded-full bg-current"></span>
                                   {CATEGORY_MAP[agent.category].label}
                                </div>
                             </div>
 
-                            <p className={`text-sm leading-relaxed font-medium mt-2 flex-1 ${isSelected ? 'text-blue-50' : 'text-slate-500'}`}>
+                            <p className={`text-sm leading-relaxed font-medium mt-2 transition-all duration-300 ${isSelected ? 'text-blue-50' : 'text-slate-500'}`}>
                                {agent.description}
                             </p>
                             
-                            {/* Capabilities Preview Section */}
-                            <div className="pt-6 mt-2 border-t border-current border-opacity-10 space-y-4">
-                               <p className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>المهام التخصصية:</p>
+                            {/* Capabilities Preview Section - Animated Expansion on Hover */}
+                            <div className={`pt-6 mt-auto border-t border-current border-opacity-10 transition-all duration-500 transform
+                               ${isSelected ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-40 group-hover:translate-y-0 group-hover:opacity-100'}
+                            `}>
+                               <p className={`text-[9px] font-black uppercase tracking-widest mb-4 transition-colors ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
+                                  المهام التخصصية:
+                               </p>
                                <div className="flex flex-wrap gap-2">
                                   {agent.capabilities.map((cap, ci) => (
-                                    <span key={ci} className={`text-[9px] font-black px-3 py-1.5 rounded-xl border transition-all ${isSelected ? 'bg-white/5 border-white/10 text-white hover:bg-white/20' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-200'}`}>
+                                    <span key={ci} className={`text-[9px] font-black px-3 py-1.5 rounded-xl border transition-all duration-300
+                                       ${isSelected 
+                                          ? 'bg-white/10 border-white/20 text-white' 
+                                          : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:border-blue-300 group-hover:bg-blue-50 group-hover:text-blue-600'}
+                                    `}>
                                       {cap}
                                     </span>
                                   ))}

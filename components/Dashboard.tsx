@@ -31,14 +31,13 @@ const PRESET_COLORS = [
   { name: 'سحابي', bg: 'bg-slate-500', text: 'text-slate-500', border: 'border-slate-500', light: 'bg-slate-50', ring: 'ring-slate-500' },
 ];
 
-// Mapping unique icons to levels for a more professional feel
 const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🎯', // Strategic Validation
-  2: '📋', // Business Model
-  3: '🛠️', // MVP Engineering
-  4: '📈', // Growth Feasibility
-  5: '💰', // Financial Modeling
-  6: '🚀'  // Investment Ready
+  1: '🎯',
+  2: '📋',
+  3: '🛠️',
+  4: '📈',
+  5: '💰',
+  6: '🚀'
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -88,20 +87,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setIsGeneratingAI(true);
     playPositiveSound();
     try {
-      const context = `Startup: ${userProfile.startupName}, Industry: ${userProfile.industry}`;
-      await reviewDeliverableAI(task.title, task.description, context);
+      const context = `Startup: ${userProfile.startupName}, Industry: ${userProfile.industry}, Description: ${userProfile.startupDescription}`;
+      const review = await reviewDeliverableAI(task.title, task.description, context);
       const session = storageService.getCurrentSession();
       if (session) {
+        const dummyContent = `مخرج تم توليده آلياً لمهمة: ${task.title}\n\nدرجة العمق الاستراتيجي: ${review.readinessScore}%\nملاحظات المراجعة الذكية: ${review.criticalFeedback}`;
+        
         storageService.submitTask(session.uid, task.id, {
-          fileData: 'data:text/plain;base64,QUkgR2VuZXJhdGVk',
-          fileName: `AI_Generated_${task.title}.pdf`
-        });
+          fileData: `data:text/plain;base64,${btoa(unescape(encodeURIComponent(dummyContent)))}`,
+          fileName: `AI_Generated_${task.title.replace(/\s+/g, '_')}.pdf`
+        }, { ...review, score: review.readinessScore });
+        
         storageService.approveTask(session.uid, task.id);
         setUserTasks(storageService.getUserTasks(session.uid));
         playCelebrationSound();
       }
     } catch (e) {
-      alert("Error.");
+      alert("حدث خطأ أثناء التوليد الذكي.");
     } finally {
       setIsGeneratingAI(false);
     }
@@ -204,7 +206,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                              </div>
                              <div className="flex items-center gap-4">
                                 {!level.isLocked && levelTask?.status !== 'APPROVED' && levelTask?.status !== 'SUBMITTED' && (
-                                    <button onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask!); }} disabled={isGeneratingAI} className="px-6 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">توليد المخرج (AI)</button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask!); }} disabled={isGeneratingAI} className="px-6 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">توليد المخرج بواسطة AI</button>
                                 )}
                                 {level.isLocked && <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">مغلق</span>}
                                 {levelTask?.status === 'SUBMITTED' && <span className="text-xs font-bold text-amber-500 uppercase tracking-widest animate-pulse">قيد المراجعة</span>}
@@ -216,7 +218,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
              </div>
            )}
-           {/* Rendering placeholder for other nav items for context */}
            {activeNav === 'builder' && <div className="text-center py-20 text-slate-500 font-bold">بوابة بناء المشروع الذكي تظهر هنا...</div>}
         </div>
       </main>
