@@ -31,15 +31,6 @@ const PRESET_COLORS = [
   { name: 'سحابي', bg: 'bg-slate-500', text: 'text-slate-500', border: 'border-slate-500', light: 'bg-slate-50', ring: 'ring-slate-500' },
 ];
 
-const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🎯',
-  2: '📋',
-  3: '🛠️',
-  4: '📈',
-  5: '💰',
-  6: '🚀'
-};
-
 export const Dashboard: React.FC<DashboardProps> = ({ 
   user: initialUser, levels, onSelectLevel, onShowCertificate, onLogout, 
   onOpenProAnalytics, onUpdateLevelUI, onAISuggestIcons,
@@ -113,6 +104,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return PRESET_COLORS.find(c => c.name === colorName) || PRESET_COLORS[0];
   };
 
+  const getRelevantIcon = (title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('تحقق') || t.includes('validation')) return '🔍';
+    if (t.includes('نموذج') || t.includes('model') || t.includes('هيكلة')) return '📐';
+    if (t.includes('هندسة') || t.includes('mvp') || t.includes('بناء')) return '🏗️';
+    if (t.includes('نمو') || t.includes('سوق') || t.includes('جدوى')) return '📈';
+    if (t.includes('مالي') || t.includes('finance') || t.includes('نمذجة')) return '🏦';
+    if (t.includes('استثمار') || t.includes('جاهزية') || t.includes('investment')) return '🚀';
+    return '🎯';
+  };
+
   return (
     <div className={`min-h-screen flex ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans transition-colors duration-500`} dir={t.dir}>
       <aside className={`fixed inset-y-0 ${t.dir === 'rtl' ? 'right-0' : 'left-0'} z-50 w-72 lg:static transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : (t.dir === 'rtl' ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0')} bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-white/5 flex flex-col shadow-xl`}>
@@ -176,7 +178,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {levels.map((level) => {
                         const colorSet = getLevelColorSet(level.customColor);
                         const levelTask = userTasks.find(t => t.levelId === level.id);
-                        const displayIcon = LEVEL_ICON_MAP[level.id] || level.icon;
+                        const displayIcon = getRelevantIcon(level.title);
                         const isApproved = levelTask?.status === 'APPROVED';
 
                         return (

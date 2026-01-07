@@ -54,15 +54,6 @@ class AcceleratorCore {
 const bizDev = new AcceleratorCore("BIZ_DEV_SECURE_TOKEN");
 export default bizDev;`;
 
-const LEVEL_ICON_MAP: Record<number, string> = {
-  1: '🎯',
-  2: '📋',
-  3: '🛠️',
-  4: '📈',
-  5: '💰',
-  6: '🚀'
-};
-
 export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'roadmap' | 'tasks' | 'profile' | 'documents' | 'evaluation' | 'lab'>('roadmap');
   const [roadmap, setRoadmap] = useState<LevelData[]>([]);
@@ -232,6 +223,17 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
       case 'slate': return 'bg-slate-700';
       default: return 'bg-blue-600';
     }
+  };
+
+  const getRelevantIcon = (title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('تحقق') || t.includes('validation')) return '🔍';
+    if (t.includes('نموذج') || t.includes('model') || t.includes('هيكلة')) return '📐';
+    if (t.includes('هندسة') || t.includes('mvp') || t.includes('بناء')) return '🏗️';
+    if (t.includes('نمو') || t.includes('سوق') || t.includes('جدوى')) return '📈';
+    if (t.includes('مالي') || t.includes('finance') || t.includes('نمذجة')) return '🏦';
+    if (t.includes('استثمار') || t.includes('جاهزية') || t.includes('investment')) return '🚀';
+    return '🎯';
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -427,7 +429,7 @@ export const DashboardHub: React.FC<DashboardHubProps> = ({ user, onLogout }) =>
               {roadmap.map((level) => {
                 const isCurrent = !level.isCompleted && !level.isLocked;
                 const activeColorClass = getTailwindBgColor(level.customColor);
-                const levelIcon = LEVEL_ICON_MAP[level.id] || level.icon;
+                const levelIcon = getRelevantIcon(level.title);
                 const levelTask = tasks.find(t => t.levelId === level.id);
                 const canGenerate = levelTask && !['APPROVED', 'SUBMITTED'].includes(levelTask.status);
                 return (
