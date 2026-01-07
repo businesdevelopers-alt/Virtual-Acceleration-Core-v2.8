@@ -82,19 +82,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const review = await reviewDeliverableAI(task.title, task.description, context);
       const session = storageService.getCurrentSession();
       if (session) {
-        const dummyContent = `مخرج تم توليده آلياً لمهمة: ${task.title}\n\nدرجة العمق الاستراتيجي: ${review.readinessScore}%\nملاحظات المراجعة الذكية: ${review.criticalFeedback}`;
+        // Generate a placeholder PDF content
+        const dummyContent = `مخرج تم توليده آلياً لمهمة: ${task.title}\n\nدرجة العمق الاستراتيجي: ${review.readinessScore}%\nملاحظات المراجعة الذكية: ${review.criticalFeedback}\n\nتوصيات Gemini:\n${review.suggestedNextSteps?.join('\n')}`;
         
         storageService.submitTask(session.uid, task.id, {
           fileData: `data:text/plain;base64,${btoa(unescape(encodeURIComponent(dummyContent)))}`,
           fileName: `AI_Generated_${task.title.replace(/\s+/g, '_')}.pdf`
         }, { ...review, score: review.readinessScore });
         
+        // Auto-approve after AI generation for seamless demo/startup flow
         storageService.approveTask(session.uid, task.id);
         setUserTasks(storageService.getUserTasks(session.uid));
         playCelebrationSound();
       }
     } catch (e) {
-      alert("حدث خطأ أثناء التوليد الذكي.");
+      alert("حدث خطأ أثناء التوليد الذكي للمخرج. يرجى التأكد من وصف المشروع في الملف الشخصي.");
     } finally {
       setIsGeneratingAI(false);
     }
@@ -208,7 +210,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                              </div>
                              <div className="flex items-center gap-4">
                                 {!level.isLocked && levelTask?.status !== 'APPROVED' && levelTask?.status !== 'SUBMITTED' && (
-                                    <button onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask!); }} disabled={isGeneratingAI} className="px-6 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">توليد المخرج بواسطة AI</button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleAIGenerateSubmission(levelTask!); }} 
+                                      disabled={isGeneratingAI} 
+                                      className="px-6 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2"
+                                    >
+                                      {isGeneratingAI ? <span className="w-3 h-3 border-2 border-indigo-400 border-t-indigo-600 rounded-full animate-spin"></span> : <span>✨</span>}
+                                      <span>توليد ذكي (AI)</span>
+                                    </button>
                                 )}
                                 {level.isLocked && <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">مغلق</span>}
                                 {levelTask?.status === 'SUBMITTED' && <span className="text-xs font-bold text-amber-500 uppercase tracking-widest animate-pulse">قيد المراجعة</span>}

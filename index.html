@@ -79,56 +79,38 @@
       .animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
       .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
 
-      /* Super Smooth Active State for Elite Buttons */
+      /* Smoother Active State for Elite Buttons */
       .active\:scale-95 {
-        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease-out !important;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease-out !important;
         will-change: transform;
       }
       
       .active\:scale-95:active {
-        transform: scale(0.94) !important;
-        box-shadow: 0 5px 10px -2px rgba(37, 99, 235, 0.2) !important;
-        transition: transform 0.1s cubic-bezier(0.12, 0, 0.39, 0) !important;
+        transform: scale(0.95) !important;
+        box-shadow: 0 4px 8px -2px rgba(37, 99, 235, 0.2) !important;
+        transition: transform 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
       }
 
-      /* Base selector for primary elite buttons */
-      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30 {
-        transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1) !important;
+      /* Elite Button Base Styling & Icon Zoom Effect for the requested selector */
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30.transition-all.transform.hover\:scale-\[1\.02\].active\:scale-95.disabled\:opacity-50.flex.items-center.justify-center.gap-4 {
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         position: relative;
         z-index: 1;
-        transform: scale(1);
       }
 
-      /* Subtle icon-zoom effect on button hover */
-      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover svg,
-      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover span[class*="text-"] {
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30.transition-all.transform.hover\:scale-\[1\.02\].active\:scale-95.disabled\:opacity-50.flex.items-center.justify-center.gap-4:hover svg,
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30.transition-all.transform.hover\:scale-\[1\.02\].active\:scale-95.disabled\:opacity-50.flex.items-center.justify-center.gap-4:hover span[class*="text-"],
+      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30.transition-all.transform.hover\:scale-\[1\.02\].active\:scale-95.disabled\:opacity-50.flex.items-center.justify-center.gap-4:hover span:not(.animate-spin) {
         transform: scale(1.15) rotate(3deg);
-        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: inline-block;
       }
 
-      /* Subtly intensified scale effect on hover */
-      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:hover {
-        transform: scale(1.025) translateY(-2px) !important;
-        box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.4) !important;
-        filter: brightness(1.05);
-      }
-
-      /* Resetting active behavior to be smoother specifically for these buttons */
+      /* Ultra-Smooth physical press feedback */
       .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:active {
-        transform: scale(0.95) translateY(0) !important;
-        transition: transform 0.1s ease-out !important;
-        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.2) !important;
-      }
-
-      /* Subtle disabled visual change */
-      .bg-blue-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-blue-500\/30:disabled,
-      .bg-red-600.text-white.rounded-\[2rem\].font-black.text-xl.shadow-3xl.shadow-red-500\/20:disabled {
-        cursor: not-allowed !important;
-        opacity: 0.4 !important;
-        transform: scale(1) !important;
-        box-shadow: none !important;
-        filter: grayscale(0.5) !important;
-        pointer-events: none !important;
+        transform: scale(0.95) translateY(1px) !important;
+        box-shadow: 0 8px 15px -5px rgba(37, 99, 235, 0.3) !important;
+        transition: transform 0.08s ease-out !important;
       }
 
       ::-webkit-scrollbar { width: 6px; }

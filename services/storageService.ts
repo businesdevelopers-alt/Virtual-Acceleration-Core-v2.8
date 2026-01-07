@@ -1,4 +1,3 @@
-
 import { UserRecord, StartupRecord, UserProfile, TaskRecord, INITIAL_ROADMAP, LevelData, ACADEMY_BADGES, ServiceRequest, ProgramRating, PartnerProfile, SudokuStats, Notification } from '../types';
 
 const DB_KEYS = {
@@ -64,7 +63,9 @@ export const storageService = {
         levelId: l.id,
         uid,
         title: `مخرج: ${l.title}`,
-        description: `يرجى رفع ملف PDF يحتوي على مخرجات المرحلة: ${l.title}`,
+        description: l.id === 2 
+          ? 'تجهيز وثيقة نموذج العمل التجاري (BMC) متضمنة القيمة المقترحة، شرائح العملاء، ومصادر الدخل المتوقعة.'
+          : `يرجى رفع ملف PDF يحتوي على مخرجات المرحلة: ${l.title}`,
         status: l.id === 1 ? 'ASSIGNED' : 'LOCKED'
       }));
       const allTasks = JSON.parse(localStorage.getItem(DB_KEYS.TASKS) || '[]');

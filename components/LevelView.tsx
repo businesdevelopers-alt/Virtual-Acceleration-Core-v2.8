@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { LevelData, UserProfile, TaskRecord, ACADEMY_BADGES } from '../types';
 import { playPositiveSound, playCelebrationSound } from '../services/audioService';
@@ -17,6 +16,7 @@ interface LevelViewProps {
 export const LevelView: React.FC<LevelViewProps> = ({ level, user, tasks, onBack, onComplete }) => {
   const [step, setStep] = useState<'CONTENT' | 'QUIZ' | 'DELIVERABLE' | 'FEEDBACK'>('CONTENT');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [showBadge, setShowBadge] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
@@ -118,13 +118,48 @@ export const LevelView: React.FC<LevelViewProps> = ({ level, user, tasks, onBack
     }
   };
 
+  const handleAIGenerateSubmission = async () => {
+    if (!currentTask) return;
+    setIsGeneratingAI(true);
+    playPositiveSound();
+    try {
+      const context = `Startup: ${user.startupName}, Industry: ${user.industry}, Description: ${user.startupDescription}, Mission: ${user.startupBio}`;
+      const review = await reviewDeliverableAI(currentTask.title, currentTask.description, context);
+      
+      const fileName = `AI_Strategic_Plan_${currentTask.title.replace(/\s+/g, '_')}.pdf`;
+      const dummyContent = `مخرج استراتيجي تم توليده آلياً لمشروع ${user.startupName}\n\nالمهمة: ${currentTask.title}\n\nتقييم الجاهزية: ${review.readinessScore}%\nملاحظات المراجعة: ${review.criticalFeedback}\n\nتوصيات Gemini للخطوات القادمة:\n${review.suggestedNextSteps?.join('\n')}`;
+      
+      const fileData = `data:text/plain;base64,${btoa(unescape(encodeURIComponent(dummyContent)))}`;
+      
+      const finalScore = review.readinessScore || 90;
+      const processedReview = { ...review, score: finalScore };
+
+      storageService.submitTask(user.uid, currentTask.id, {
+        fileData,
+        fileName
+      }, processedReview);
+
+      // Auto-approve for AI generated flows to keep user momentum
+      storageService.approveTask(user.uid, currentTask.id);
+      
+      setAiResult(processedReview);
+      setStep('FEEDBACK');
+      playCelebrationSound();
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء التوليد الذكي للمخرج. يرجى التأكد من وصف المشروع.");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const handleQuizSubmit = () => {
     setQuizSubmitted(true);
     const correctCount = aiQuiz.filter((q, i) => quizAnswers[i] === q.correctIndex).length;
     
     if (correctCount === aiQuiz.length) {
       playCelebrationSound();
-      setTimeout(() => setStep('DELIVERABLE'), 4000);
+      setTimeout(() => setStep('DELIVERABLE'), 2500);
     } else {
       playPositiveSound();
     }
@@ -285,7 +320,7 @@ export const LevelView: React.FC<LevelViewProps> = ({ level, user, tasks, onBack
              <div className="flex justify-center pt-16">
                 <button 
                   onClick={() => { setStep('QUIZ'); playPositiveSound(); window.scrollTo(0,0); }} 
-                  className="px-24 py-8 bg-blue-600 text-white rounded-[3rem] font-black text-2xl hover:bg-blue-700 transition-all transform hover:scale-105 active:scale-95 shadow-3xl shadow-blue-600/30 flex items-center gap-6 group"
+                  className="px-24 py-8 bg-blue-600 text-white rounded-[3rem] font-black text-xl hover:bg-blue-700 transition-all transform hover:scale-105 active:scale-95 shadow-3xl shadow-blue-600/30 flex items-center gap-6 group"
                 >
                   <span>اختبار الجاهزية الذهنية</span>
                   <svg className="w-8 h-8 transform rotate-180 group-hover:-translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -370,29 +405,55 @@ export const LevelView: React.FC<LevelViewProps> = ({ level, user, tasks, onBack
                  <p className="text-slate-500 text-xl font-medium leading-relaxed max-w-lg mx-auto">{currentTask?.description}</p>
               </div>
 
-              <div className="relative group">
-                 <input 
-                  type="file" 
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  disabled={isSubmitting}
-                 />
-                 <div className={`w-full h-80 border-4 border-dashed rounded-[4rem] flex flex-col items-center justify-center transition-all duration-700
-                   ${isSubmitting ? 'bg-blue-50 border-blue-300 shadow-2xl shadow-blue-500/10' : 'bg-white border-slate-200 group-hover:border-blue-600 group-hover:bg-blue-50/20 shadow-sm'}
-                 `}>
-                    {isSubmitting ? (
-                      <div className="flex flex-col items-center gap-10">
-                        <div className="w-16 h-16 border-8 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-blue-600 text-2xl font-black animate-pulse uppercase tracking-widest">AI Strategic Audit in progress...</p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-8xl mb-6 transform group-hover:scale-110 group-hover:-rotate-6 transition-transform opacity-20">📄</div>
-                        <p className="font-black text-slate-900 text-3xl mb-2">رفع مخرج المرحلة (PDF)</p>
-                        <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]">Executive standard PDF required</p>
-                      </>
-                    )}
+              <div className="space-y-8">
+                 <div className="relative group">
+                    <input 
+                      type="file" 
+                      accept=".pdf"
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      disabled={isSubmitting || isGeneratingAI}
+                    />
+                    <div className={`w-full h-80 border-4 border-dashed rounded-[4rem] flex flex-col items-center justify-center transition-all duration-700
+                      ${isSubmitting ? 'bg-blue-50 border-blue-300 shadow-2xl shadow-blue-500/10' : 'bg-white border-slate-200 group-hover:border-blue-600 group-hover:bg-blue-50/20 shadow-sm'}
+                    `}>
+                        {isSubmitting ? (
+                          <div className="flex flex-col items-center gap-10">
+                            <div className="w-16 h-16 border-8 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-blue-600 text-2xl font-black animate-pulse uppercase tracking-widest">AI Strategic Audit in progress...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-8xl mb-6 transform group-hover:scale-110 group-hover:-rotate-6 transition-transform opacity-20">📄</div>
+                            <p className="font-black text-slate-900 text-3xl mb-2">رفع مخرج المرحلة (PDF)</p>
+                            <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]">Executive standard PDF required</p>
+                          </>
+                        )}
+                    </div>
+                 </div>
+
+                 <div className="text-center space-y-6">
+                    <div className="flex items-center gap-4">
+                       <div className="flex-1 h-px bg-slate-200"></div>
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">أو استخدم المساعد الذكي</span>
+                       <div className="flex-1 h-px bg-slate-200"></div>
+                    </div>
+
+                    <button 
+                      onClick={handleAIGenerateSubmission}
+                      disabled={isGeneratingAI || isSubmitting}
+                      className="w-full py-6 bg-indigo-50 border-2 border-indigo-100 text-indigo-700 rounded-[2rem] font-black text-xl hover:bg-indigo-600 hover:text-white transition-all shadow-xl shadow-indigo-500/10 flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
+                    >
+                       {isGeneratingAI ? (
+                         <div className="w-6 h-6 border-4 border-indigo-400 border-t-indigo-600 rounded-full animate-spin"></div>
+                       ) : (
+                         <>
+                           <span className="text-3xl">✨</span>
+                           <span>توليد مخرج استراتيجي مدعوم بـ AI</span>
+                         </>
+                       )}
+                    </button>
+                    <p className="text-[10px] text-slate-400 font-bold max-w-sm mx-auto">سيقوم Gemini بتحليل بيانات مشروعك وتوليد خطة عمل أولية متوافقة مع معايير المسرعة.</p>
                  </div>
               </div>
            </div>
